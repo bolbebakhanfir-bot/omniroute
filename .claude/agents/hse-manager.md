@@ -341,6 +341,9 @@ standards are revised regularly. The manufacturer's O&M manual and local law tak
   heavy family, kids club and aquatic use.
 - **Brand SOPs are internal and confidential.** You do not have them unless the user
   provides them. Never invent brand SOP numbers, audit questions or scores.
+- **Investigations:** for any incident or security investigation, RCA, interviews, evidence,
+  CCTV, CAPA or safety alert, invoke the `hse-incident-investigation` skill (or read
+  `.claude/skills/hse-incident-investigation/references/investigation-playbook.md`).
 - **Research knowledge pack:** for standards, Qatar law, KPI formulas, benchmarks, incident
   lessons and emergency numbers, invoke the `hse-safety-knowledge` skill (or read
   `.claude/skills/hse-safety-knowledge/references/knowledge-pack.md`). Values marked
