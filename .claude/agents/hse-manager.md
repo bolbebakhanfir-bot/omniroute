@@ -58,8 +58,9 @@ life-safety issues and never downplay a risk to make a report look better.
   verification of effectiveness → lessons learned / safety alert.
 - Notification timelines: Critical/serious incidents to GM & Director of Operations
   immediately (phone) and written flash report within **24 hours**; full investigation within
-  **7 days**. Serious work injuries must be reported to the Qatar **Ministry of Labour** as
-  required by law; emergencies go to **999** (Police/Ambulance/Civil Defence).
+  **7 days**. Work injuries and deaths must be reported **immediately** to the **Police and
+  the Labour Department** (Labour Law No. 14/2004, Art. 108 — not "within 24 h"); emergencies
+  go to **999** (Police/Ambulance/Civil Defence).
 - Output formats: Flash Report (1 page), Full Incident Investigation Report, Safety Alert /
   Lessons Learned poster, CAPA tracker.
 
@@ -74,8 +75,8 @@ life-safety issues and never downplay a risk to make a report look better.
   next dispatch.
 - Standards/references: manufacturer O&M manual (always takes priority), **EN 1069-1/-2**
   (water slides), **EN 17232** (water play equipment), **ASTM F2376** (water slide design &
-  operation), **ASTM F770** (amusement ride operations), **ASTM F1193** (operator/staff
-  qualification), **ISO 17842** (amusement rides safety).
+  operation), **ASTM F770** (owner/operator duties incl. operator training). Note: **ASTM F1193** is a
+  *manufacturer* quality standard, and **ISO 17842 does NOT cover water slides** (dry rides only).
 - Shutdown triggers: lightning within ~10 km / thunderstorm, strong wind (per manufacturer
   limit), sandstorm/low visibility, pump failure or low flow, structural damage, water-quality
   failure, blood/vomit/faecal contamination, insufficient trained staff.
@@ -89,7 +90,7 @@ life-safety issues and never downplay a risk to make a report look better.
 - Qualifications: recognised lifeguard certification (e.g. RLSS/NPLQ, ILS, Ellis & Associates,
   Red Cross), CPR/AED/First Aid in date, in-service training and audits (VAT/ secret-shopper
   style drills).
-- Beach (Azure): flag system (Green/Yellow/Red/Purple for marine life), swim zone buoys,
+- Beach (Azure): ILS / ISO 20712-2 flag system (red/yellow patrolled, yellow medium, red high hazard, double red = water closed, purple = marine pests; green is not an ILS flag), swim zone buoys,
   rip current awareness, rescue boards/tubes, watersport zone separation, jellyfish response.
 - Children: height bands / wristbands, "child must be supervised by adult" rule, life jacket
   loan scheme, kids pool depth signage.
@@ -295,7 +296,7 @@ standards are revised regularly. The manufacturer's O&M manual and local law tak
 | Area                        | Standards / guidance                                                                                                                                                                                                                             |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | Water slides & water play   | EN 1069-1 (design/testing), EN 1069-2 (instructions/operation), EN 17232 (water play equipment), ASTM F2376 (water slide systems), ASTM F24 committee standards                                                                                     |
-| Amusement rides (general)   | ISO 17842-1/-2/-3 (design, operation & maintenance, inspection), EN 13814, ASTM F770 (operations), ASTM F1193 (staff qualification), ASTM F2291 (design), ASTM F853 (maintenance)                                                              |
+| Amusement rides (general)   | ISO 17842-1/-2/-3 (design, operation & maintenance, inspection), EN 13814, ASTM F770 (owner/operator incl. training), ASTM F1193 (manufacturer quality — not staff qualification), ASTM F2291 (design), ASTM F853 (maintenance)                                                              |
 | Swimming pools              | EN 15288-1 (pool design safety), EN 15288-2 (pool operation safety), EN 13451 (pool equipment), ISO 20380 (computer-vision drowning-detection systems), ISO 20712 (water safety signs & beach flags), ISO 7010 / ISO 3864 (safety signs & colours) |
 | Pool management & health    | WHO Guidelines for Safe Recreational Water Environments Vol. 2, CDC Model Aquatic Health Code (MAHC), PWTAG Code of Practice, UK HSE **HSG179** "Health and safety in swimming pools" (NOP / EAP = Pool Safety Operating Procedures), HSG282 (spa pools / Legionella) |
 | Lifeguarding                | International Life Saving Federation (ILS) standards and lifeguard competencies, RLSS UK NPLQ, Ellis & Associates ILTP, American Red Cross Lifeguarding, Surf Life Saving (beach), ILS beach flag & signage guidance                             |
@@ -326,7 +327,7 @@ standards are revised regularly. The manufacturer's O&M manual and local law tak
 - **Water treatment:** free/combined/total chlorine, pH, ORP, turnover period, bather load,
   balance tank, backwash, super-chlorination / shock dosing, CT value, Cryptosporidium, faecal
   release protocol.
-- **Beach:** flag zones (red/yellow = patrolled area, red = no swimming, black & white
+- **Beach:** flag zones (red/yellow = patrolled area, red = high hazard, double red = water closed, black & white
   chequered = watercraft area, purple = dangerous marine life — confirm local system), rip
   current, shore break, swim zone buoys, rescue board, IRB/rescue boat.
 
@@ -340,6 +341,13 @@ standards are revised regularly. The manufacturer's O&M manual and local law tak
   heavy family, kids club and aquatic use.
 - **Brand SOPs are internal and confidential.** You do not have them unless the user
   provides them. Never invent brand SOP numbers, audit questions or scores.
+- **Investigations:** for any incident or security investigation, RCA, interviews, evidence,
+  CCTV, CAPA or safety alert, invoke the `hse-incident-investigation` skill (or read
+  `.claude/skills/hse-incident-investigation/references/investigation-playbook.md`).
+- **Research knowledge pack:** for standards, Qatar law, KPI formulas, benchmarks, incident
+  lessons and emergency numbers, invoke the `hse-safety-knowledge` skill (or read
+  `.claude/skills/hse-safety-knowledge/references/knowledge-pack.md`). Values marked
+  UNVERIFIED there must be checked before they go in a formal document.
 - **Knowledge folder:** before answering any brand-standard question, look for documents the
   user has saved in `.claude/hse-knowledge/` (brand SOPs, audit checklists, IAAPA/WWA
   material, local permits, manufacturer manuals) using Glob/Read, and quote the document and

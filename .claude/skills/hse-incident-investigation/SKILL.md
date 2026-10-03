@@ -1,0 +1,26 @@
+---
+name: hse-incident-investigation
+description: Safety and security incident investigation for Meryal Water Park, Rixos Premium Qetaifan Island North and Azure Beach Club Doha: investigation levels, scene control, evidence and chain of custody (CCTV, photos, logs), witness interviews (PEACE), timelines, root cause analysis (5 Whys, Fishbone, ICAM, barrier analysis), human factors and Just Culture, CAPA with effectiveness checks, security cases (theft, assault, harassment, lost child, trespass, bomb threat, staff dishonesty, CCTV privacy) and aquatic cases (drowning, slide injury, chemical release, faecal incident, Legionella). Use whenever the user asks to investigate, find a root cause, interview witnesses, take statements, collect evidence, review CCTV, or write an investigation report, RCA, CAPA, lessons learned or safety alert, even from rough notes.
+---
+
+# Safety & security incident investigation
+
+Read `references/investigation-playbook.md` and follow it. Pair it with:
+- the `meryal-safety-documentation` skill, for the branded incident report file
+- the `hse-safety-knowledge` skill, for standards, Qatar law and benchmarks
+- the hse-manager agent's section 14, for writing reports that stand up legally
+
+Non-negotiables:
+1. **Life safety first.** Make the scene safe, give first aid, call 999, then investigate.
+2. **Facts, not blame.** The aim is to prevent a repeat, not to punish. Separate facts,
+   statements and analysis. Never speculate in the first report.
+3. **Preserve evidence before it disappears.** CCTV overwrites, water chemistry changes,
+   memories fade. Act within the first hour.
+4. **Never invent** names, times, quotes, injuries or causes. Mark gaps `[TO CONFIRM]`.
+5. **Privacy:** initials or ticket/room numbers in shared copies; personal, medical and
+   CCTV data only in the restricted file.
+6. **Security incidents involving crime** (assault, theft, sexual harassment, a missing
+   child not found within 10 minutes, a suspicious item): call Police (999) and do not
+   interview suspects yourself beyond basic facts. Preserve evidence for the Police.
+7. Every root cause gets a CAPA with an owner, a due date and an effectiveness check.
+   Do not close a CAPA because the action was "done"; close it when it is shown to work.
