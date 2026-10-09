@@ -104,6 +104,7 @@ label.f{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--
 details>summary{cursor:pointer;font-weight:500}
 #docView{max-height:560px;overflow:auto;border:1px solid var(--line);background:#fff;color:#111;padding:8px;font-size:12px;line-height:1.35}
 #docView table{border-collapse:collapse;width:100%}#docView td{border:1px solid #999;padding:2px 5px;vertical-align:top}#docView img{max-width:160px}
+.pics{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-top:8px}.pics figure{margin:0;display:flex;flex-direction:column;gap:6px;align-items:flex-start}.pics img{width:100%;border:1px solid var(--line);background:#fff;-webkit-touch-callout:default;user-select:auto}
 .note2{background:var(--warn-bg);border-left:3px solid var(--warn);padding:8px 10px;border-radius:0 4px 4px 0;font-size:12.5px}
 </style>
 
@@ -203,6 +204,7 @@ details>summary{cursor:pointer;font-weight:500}
       <button class="btn" id="nextBtn">Next permit</button>
     </div>
     <div class="row" id="linkRow"></div>
+    <div id="imgPanel"></div>
     <div class="sub">Claude's review is decision support. Nothing is signed until you press the button, and you remain the approver.</div>
   </section>
 
@@ -503,7 +505,7 @@ async function docxInk(zip) {
 }
 async function identifyScan() {
   const sample = await (window.claude?.use ? claude.use("sample") : null), lim = sample ? await sample.limits().catch(() => ({})) : {};
-  if (!sample || !lim.images) { msg($("#loadMsg"), "This permit is a scan or photo and Claude image reading is not available here. Tick the checklist by hand, or send the typed PDF or Word version.", "err"); return; }
+  if (!sample || !lim.images) { msg($("#loadMsg"), "This permit is a scan or photo and reading photos is not available in this version. Tick the checklist by hand, or ask the sender for the Word or PDF version.", "err"); return; }
   const blobs = await pageBlobs(S.permit.pdf, S.permit.pages.length, 1.6);
   const prompt = `This is a scanned or photographed hotel work permit form of Rixos Premium Qetaifan Island North (forms RPQIN.OHS.F.020 Work Permit, F.021 Work at Height, F.022 Confined Space, F.023 Hot Work). Read it carefully and return ONLY this JSON:
 {"form":"F.020|F.021|F.022|F.023|unknown",
@@ -575,8 +577,8 @@ function renderDocs() {
 $("#docList").addEventListener("change", e => { const id = +e.target.closest(".doc")?.dataset.id; const d = S.docs.find(x => x.id === id); if (d) { d.kind = e.target.value; if (S.permit) buildReview(false); } });
 $("#docList").addEventListener("click", e => { if (!e.target.classList.contains("x")) return; const id = +e.target.closest(".doc").dataset.id; S.docs = S.docs.filter(d => d.id !== id); renderDocs(); if (S.permit) buildReview(false); });
 
-async function handleFiles(files) {
-  const infos = [], bad = [];
+async function handleFiles(fileList) {
+  const files = [...fileList], infos = [], bad = [];
   msg($("#loadMsg"), "Reading files…");
   for (const f of files) { try { infos.push(await classify(f)); } catch (e) { console.error(e); bad.push(f.name); } }
   const permit = infos.find(i => i.form && i.kind !== "other") || infos.find(i => i.nameHit && ["pdf", "docx", "image"].includes(i.kind))
@@ -955,31 +957,61 @@ $("#signBtn").onclick = async () => {
     msg($("#signMsg"), `${status}. Files are ready: save them below.`, "ok");
   } catch (e) { console.error(e); msg($("#signMsg"), "Could not build the PDF. Reload the permit and try again.", "err"); $("#signBtn").disabled = false; }
 };
-async function save(name, data, label) {
-  $("#linkRow").innerHTML = "";
-  const dl = await (window.claude?.use ? claude.use("downloads") : null);
-  let saved = false;
-  if (dl) {
-    try { await dl.save({filename: name, data}); saved = true; msg($("#signMsg"), label + " saved.", "ok"); }
-    catch (e) { if (e?.code === "declined") { msg($("#signMsg"), "Save was cancelled. Press the button again to save.", ""); return; } console.warn("download failed", e); }
+async function pdfPictures(blob) {
+  const pdf = await pdfjsLib.getDocument({data: await blob.arrayBuffer()}).promise, out = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const pg = await pdf.getPage(i), vp = pg.getViewport({scale: 2}), c = document.createElement("canvas");
+    c.width = vp.width; c.height = vp.height;
+    await pg.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+    out.push({i, url: c.toDataURL("image/png"), blob: await new Promise(r => c.toBlob(r, "image/png"))});
   }
-  if (saved) return;
-  // fallback: put the file in the page's storage and show a link that opens in a new tab
+  return out;
+}
+async function showPictures(base, blob, dl, why) {
+  const box = $("#imgPanel"); box.innerHTML = '<div class="sub"><span class="spin"></span> Preparing pictures…</div>';
+  const pics = await pdfPictures(blob);
+  box.innerHTML = `<div class="note2">${esc(why)} The file is shown below as pictures. Press and hold a picture to save or share it${dl ? ", or use the Save picture button" : ""}, then send it by email or WhatsApp.</div>
+    <div class="pics">${pics.map(p => `<figure><img alt="Page ${p.i}" src="${p.url}"><button class="btn sm" data-i="${p.i}"${dl ? "" : " hidden"}>Save picture ${p.i}</button></figure>`).join("")}</div>`;
+  box.querySelectorAll("button[data-i]").forEach(btn => btn.onclick = async () => {
+    const i = +btn.dataset.i;
+    try { await dl.save({filename: `${base}_page${i}.png`, data: pics[i - 1].blob}); msg($("#signMsg"), `Picture ${i} saved.`, "ok"); }
+    catch (e) { if (e?.code !== "declined") msg($("#signMsg"), "This view did not allow saving the picture. Press and hold it instead.", "err"); }
+  });
+  box.scrollIntoView({block: "nearest"});
+}
+async function save(name, data, label) {
+  $("#linkRow").innerHTML = ""; $("#imgPanel").innerHTML = "";
+  const dl = await (window.claude?.use ? claude.use("downloads") : null);
+  let code = dl ? null : "unavailable";
+  if (dl) {
+    try { await dl.save({filename: name, data}); msg($("#signMsg"), label + " saved.", "ok"); return; }
+    catch (e) { if (e?.code === "declined") { msg($("#signMsg"), "Save was cancelled. Press the button again to save.", ""); return; } code = e?.code || "unavailable"; console.warn("download failed", e); }
+  }
+  const blocked = ["extension_not_enabled", "rejected_extension"].includes(code);
+  const why = blocked ? `This view does not allow saving ${/\.docx$/i.test(name) ? "Word" : /\.csv$/i.test(name) ? "CSV" : "PDF"} files.` : "This view could not start a download.";
   const as = await (window.claude?.use ? claude.use("assets") : null);
-  if (!as) { msg($("#signMsg"), "This view cannot save files. Open the page in the Claude app or in claude.ai in your browser, then try again.", "err"); return; }
-  try {
-    msg($("#signMsg"), "Preparing a link…");
-    const r = await as.upload(data instanceof Blob ? data : new Blob([data], {type: "text/csv"}));
-    $("#linkRow").innerHTML = `<a class="btn primary" style="text-decoration:none;display:inline-block" href="${esc(r.url)}" target="_blank" rel="noopener">Open ${esc(label)} in a new tab</a><span class="sub">Then use the browser's download or share button to keep it.</span>`;
-    msg($("#signMsg"), "Your browser did not offer the download. Use the link below.", "ok");
-  } catch (e) { console.error(e); msg($("#signMsg"), "Could not save or open the file. Reload the page and try again.", "err"); }
+  if (as && /\.(pdf|csv)$/i.test(name)) {
+    try {
+      const r = await as.upload(data instanceof Blob ? data : new Blob([data], {type: "text/csv"}));
+      $("#linkRow").innerHTML = `<a class="btn primary" style="text-decoration:none;display:inline-block" href="${esc(r.url)}" target="_blank" rel="noopener">Open ${esc(label)} in a new tab</a><span class="sub">Then use the browser's download or share button.</span>`;
+    } catch (e) { console.error(e); }
+  }
+  if (data instanceof Blob && data.type === "application/pdf") {
+    try { await showPictures(name.replace(/\.pdf$/i, ""), data, dl, why); msg($("#signMsg"), why + " Use the pictures below.", "ok"); } catch (e) { console.error(e); msg($("#signMsg"), why + " Could not make pictures either.", "err"); }
+  } else if (typeof data === "string") {
+    $("#imgPanel").innerHTML = `<div class="note2">${esc(why)} Copy the text below and paste it into Excel or an email.</div><textarea readonly style="min-height:140px;font-family:var(--mono);font-size:12px" id="csvOut">${esc(data)}</textarea>`;
+    msg($("#signMsg"), why, "err");
+  } else {
+    msg($("#signMsg"), why + " The signed review record is shown below as pictures. To sign the permit itself, ask the sender for the PDF version.", "err");
+    if (S.out?.record) { try { await showPictures(S.out.base + "_REVIEW_RECORD", S.out.record, dl, why); } catch (e) { console.error(e); } }
+  }
 }
 $("#saveSigned").onclick = () => save(`${S.out.base}_${S.out.status.replace(/ /g, "_")}.${S.out.ext}`, S.out.signed, "Signed permit");
 $("#saveRecord").onclick = () => save(`${S.out.base}_REVIEW_RECORD.pdf`, S.out.record, "Review record");
 $("#saveBoth").onclick = () => save(`${S.out.base}_${S.out.status.replace(/ /g, "_")}_with_record.pdf`, S.out.both, "Combined PDF");
 $("#nextBtn").onclick = () => {
   S.permit = null; S.docs = []; S.items = []; S.ai = null; S.out = null; S.box = null; S.tags = new Set(); S.form = null;
-  $("#viewer").hidden = true; $("#docView").hidden = true; $("#docNote").hidden = true; $("#linkRow").innerHTML = ""; $("#reviewBody").style.display = "none"; $("#reviewBody").hidden = true; $("#reviewEmpty").style.display = ""; $("#outRow").hidden = true;
+  $("#viewer").hidden = true; $("#docView").hidden = true; $("#docNote").hidden = true; $("#linkRow").innerHTML = ""; $("#imgPanel").innerHTML = ""; $("#reviewBody").style.display = "none"; $("#reviewBody").hidden = true; $("#reviewEmpty").style.display = ""; $("#outRow").hidden = true;
   $("#findings").innerHTML = ""; $("#notes").value = ""; $("#ack").checked = false; document.querySelector("input[name=dec][value=approve]").checked = true;
   renderDocs(); msg($("#loadMsg"), ""); msg($("#signMsg"), ""); syncNotes(); window.scrollTo({top: 0});
 };
@@ -997,4 +1029,5 @@ $("#csvBtn").onclick = () => {
 /* ---------- init ---------- */
 S.sig = store.get("ptw.sig", null); $("#signer").value = store.get("ptw.name", "HSE Manager");
 renderSig(); renderHist(); syncNotes();
+(async () => { const sm = await (window.claude?.use ? claude.use("sample").catch(() => null) : null); if (!sm) { $("#aiBtn").hidden = true; msg($("#aiMsg"), "Automatic checks only. Tick or change anything by hand.", ""); } })();
 </script>
