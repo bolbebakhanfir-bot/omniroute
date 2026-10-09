@@ -1054,7 +1054,7 @@ $("#signBtn").onclick = async () => {
     hist.unshift({t: qatarNow(), form: S.form || "?", no: field(S.permit.text, "Permit Number") || S.permit.name, status, file: S.out.base, note: $("#notes").value.trim().slice(0, 200)});
     store.set("ptw.history", hist.slice(0, 500)); renderHist();
     $("#outRow").hidden = false; drawBox();
-    msg($("#signMsg"), `${status}. Files are ready: save them below.`, "ok");
+    msg($("#signMsg"), `${status}. ${S.manual ? "Signature placed where you tapped." : status === "NOT APPROVED" ? "Marked NOT APPROVED in the Approved By (Safety Manager) box." : "Signature placed in the Approved By (Safety Manager) box."} Save the files below.`, "ok");
   } catch (e) { console.error(e); msg($("#signMsg"), "Could not build the PDF. Reload the permit and try again.", "err"); $("#signBtn").disabled = false; }
 };
 async function pdfPictures(blob) {
