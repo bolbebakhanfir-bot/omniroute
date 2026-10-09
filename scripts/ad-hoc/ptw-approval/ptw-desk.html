@@ -1,0 +1,1000 @@
+<title>PTW Desk</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: two-column workbench (permit on the left, review on the right), decision bar below; stacks on phones. */
+:root{
+  --bg:#F2F5F4; --surface:#FFFFFF; --ink:#14211F; --muted:#5A6B68; --line:#D3DCD9;
+  --accent:#0F5C57; --accent-ink:#FFFFFF; --soft:#E6EFED;
+  --good:#17743A; --bad:#B3261E; --warn:#9A5B00; --good-bg:#E3F2E8; --bad-bg:#FBE7E5; --warn-bg:#FFF1D6;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1413; --surface:#152120; --ink:#E5EEEC; --muted:#93A5A1; --line:#2A3B38;
+  --accent:#4DB6AC; --accent-ink:#04201D; --soft:#1C2E2B;
+  --good:#5ED08A; --bad:#FF8A80; --warn:#F2B24C; --good-bg:#12301E; --bad-bg:#3A1816; --warn-bg:#3A2A0B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1413; --surface:#152120; --ink:#E5EEEC; --muted:#93A5A1; --line:#2A3B38;
+  --accent:#4DB6AC; --accent-ink:#04201D; --soft:#1C2E2B;
+  --good:#5ED08A; --bad:#FF8A80; --warn:#F2B24C; --good-bg:#12301E; --bad-bg:#3A1816; --warn-bg:#3A2A0B; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 var(--font);padding-inline:16px;padding-block:16px 48px}
+.wrap{max-width:1240px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 16px;padding-bottom:12px;border-bottom:2px solid var(--ink)}
+h1{margin:0;font-size:26px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13px}
+.mono{font-family:var(--mono)}
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:16px;align-items:start}
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card h2{margin:0;font-size:12px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;color:var(--muted);display:flex;gap:8px;align-items:center}
+.card h2 b{font-family:var(--mono);background:var(--ink);color:var(--bg);border-radius:3px;padding:1px 6px;font-weight:500}
+.drop{border:1.5px dashed var(--line);border-radius:6px;padding:14px;display:flex;flex-direction:column;gap:4px;align-items:flex-start;cursor:pointer;background:var(--bg)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--soft)}
+.drop strong{font-weight:600}
+.drop span{color:var(--muted);font-size:12.5px}
+button,select,input,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.btn{background:var(--surface);border:1px solid var(--ink);border-radius:4px;padding:7px 12px;font-weight:500}
+.btn:hover{background:var(--soft)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sm{padding:3px 8px;font-size:12.5px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.docs{display:flex;flex-direction:column;gap:6px}
+.doc{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:4px;padding:6px 8px;min-width:0}
+.doc .n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc select{border:1px solid var(--line);background:var(--surface);border-radius:3px;padding:2px 4px}
+.doc .x{border:0;background:none;color:var(--muted);font-size:16px;line-height:1}
+.warnnote{color:var(--warn);font-size:12.5px}
+.stage{position:relative;border:1px solid var(--line);background:#fff;line-height:0;touch-action:manipulation}
+.stage canvas{width:100%;height:auto;display:block}
+.sigbox{position:absolute;border:1.5px dashed var(--warn);background:rgba(255,241,214,.35);display:flex;align-items:center;justify-content:center;overflow:hidden;pointer-events:none}
+.sigbox img{max-width:100%;max-height:100%}
+.sigbox.signed{border-color:#17743A;border-style:solid}
+.pager{display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:2px 10px;font-size:12.5px}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.group{display:flex;flex-direction:column}
+.group h3{margin:12px 0 4px;font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:3px}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;padding:7px 0;border-bottom:1px solid var(--line);align-items:center}
+.item .t{min-width:0}
+.item .note{grid-column:1/-1;color:var(--muted);font-size:12.5px;margin-top:-2px}
+.item .note:empty{display:none}
+.seg{display:inline-flex;border:1px solid var(--ink);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:4px 10px;font-size:12.5px;font-weight:500;border-right:1px solid var(--line)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"].y{background:var(--good);color:var(--surface)}
+.seg button[aria-pressed="true"].n{background:var(--bad);color:var(--surface)}
+.seg button[aria-pressed="true"].a{background:var(--muted);color:var(--surface)}
+.src{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-left:6px;border:1px solid var(--line);border-radius:3px;padding:0 4px;vertical-align:1px}
+.src.ai{color:var(--accent);border-color:var(--accent)}
+.meter{height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);width:0}
+.find{border-left:3px solid var(--accent);background:var(--soft);padding:10px 12px;border-radius:0 4px 4px 0;display:flex;flex-direction:column;gap:6px}
+.find.warn{border-color:var(--warn);background:var(--warn-bg)}
+.find.bad{border-color:var(--bad);background:var(--bad-bg)}
+.find.good{border-color:var(--good);background:var(--good-bg)}
+.find h4{margin:0;font-size:13px}
+.find ul{margin:0;padding-left:18px}
+.pill{display:inline-block;font-family:var(--mono);font-size:11px;padding:1px 7px;border-radius:999px;border:1px solid currentColor}
+.pill.good{color:var(--good)}.pill.bad{color:var(--bad)}.pill.warn{color:var(--warn)}
+.decide{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media(max-width:760px){.decide{grid-template-columns:minmax(0,1fr)}}
+.opts{display:flex;flex-direction:column;gap:6px}
+.opt{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:4px;padding:8px 10px;cursor:pointer}
+.opt:has(input:checked){border-color:var(--accent);background:var(--soft)}
+textarea,input[type=text]{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:4px;padding:7px 9px}
+textarea{min-height:76px;resize:vertical}
+label.f{display:flex;flex-direction:column;gap:3px;font-size:12.5px;color:var(--muted)}
+.pad{border:1px solid var(--ink);border-radius:4px;background:#fff;touch-action:none;width:100%;height:auto;display:block;cursor:crosshair}
+.sigprev{background:#fff;border:1px solid var(--line);border-radius:4px;padding:6px;display:flex;align-items:center;justify-content:center;min-height:64px}
+.sigprev img{max-height:70px;max-width:100%}
+.hist{display:flex;flex-direction:column}
+.hist .h{display:grid;grid-template-columns:130px 70px minmax(0,1fr) auto;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+@media(max-width:620px){.hist .h{grid-template-columns:minmax(0,1fr) auto}}
+.msg{font-size:13px}
+.msg.err{color:var(--bad)}.msg.ok{color:var(--good)}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.spin{animation:none}}
+.empty{color:var(--muted);padding:18px 4px}
+details>summary{cursor:pointer;font-weight:500}
+#docView{max-height:560px;overflow:auto;border:1px solid var(--line);background:#fff;color:#111;padding:8px;font-size:12px;line-height:1.35}
+#docView table{border-collapse:collapse;width:100%}#docView td{border:1px solid #999;padding:2px 5px;vertical-align:top}#docView img{max-width:160px}
+.note2{background:var(--warn-bg);border-left:3px solid var(--warn);padding:8px 10px;border-radius:0 4px 4px 0;font-size:12.5px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>PTW Desk</h1>
+      <div class="sub">Permit-to-work review and sign-off · Meryal Water Park · Azure Beach Club · Rixos Premium Qetaifan Island North</div>
+    </div>
+    <div class="sub mono" id="stamp"></div>
+  </header>
+
+  <div class="grid">
+    <section class="card" aria-labelledby="h-docs">
+      <h2 id="h-docs"><b>1</b> Documents</h2>
+      <label class="drop" id="dropAll" for="fileAll">
+        <strong>Drop everything here, or tap to choose files</strong>
+        <span>The work permit (PDF, Word or a photo) plus its method statement and risk assessment (PDF or Word). The permit is recognised automatically.</span>
+      </label>
+      <input id="fileAll" type="file" accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,application/pdf,image/*" multiple hidden>
+      <div class="docs" id="docList"></div>
+      <div class="msg" id="loadMsg" role="status"></div>
+      <div id="viewer" hidden>
+        <div class="note2" id="docNote" hidden>This permit is a Word file. It is read for the review and your signature is inserted into the Approved By (Safety Manager) box of the Word file. The review record is a PDF.</div>
+        <div id="docView" hidden></div>
+        <div class="row" id="pagerRow" style="justify-content:space-between;margin-bottom:6px">
+          <div class="pager"><button class="btn sm" id="prevP" aria-label="Previous page">‹</button><span id="pgInfo"></span><button class="btn sm" id="nextP" aria-label="Next page">›</button></div>
+          <span class="sub" id="boxHint">Your signature always goes in the "Approved By (Safety Manager)" box</span>
+        </div>
+        <div class="stage" id="stage"><canvas id="pageCv"></canvas><div class="sigbox" id="sigbox"></div></div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-rev">
+      <h2 id="h-rev"><b>2</b> Review</h2>
+      <div id="reviewEmpty" class="empty">Load a permit to start. The checklist is built from the form and the nature of the work, then ticked from the permit and its attachments.</div>
+      <div id="reviewBody" hidden style="display:none;flex-direction:column;gap:12px">
+        <div>
+          <div class="sub" style="margin-bottom:4px">Form <span class="mono" id="formName"></span> · Nature of work (tap to add or remove)</div>
+          <div class="chips" id="tags"></div>
+        </div>
+        <div class="row">
+          <button class="btn primary" id="aiBtn">Review with Claude</button>
+          <button class="btn" id="rebuildBtn">Re-run automatic checks</button>
+          <span class="msg" id="aiMsg" role="status"></span>
+        </div>
+        <div id="findings" style="display:flex;flex-direction:column;gap:8px"></div>
+        <div>
+          <div class="row" style="justify-content:space-between"><span class="sub" id="prog"></span></div>
+          <div class="meter"><i id="meter"></i></div>
+        </div>
+        <div id="checklist"></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="h-dec">
+    <h2 id="h-dec"><b>3</b> Decision and signature</h2>
+    <div class="decide">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="opts" role="radiogroup" aria-label="Decision">
+          <label class="opt"><input type="radio" name="dec" value="approve" checked> <span><strong>Approve</strong></span></label>
+          <label class="opt"><input type="radio" name="dec" value="conditions"> <span><strong>Approve with conditions</strong></span></label>
+          <label class="opt"><input type="radio" name="dec" value="reject"> <span><strong>Reject, resubmit</strong></span></label>
+        </div>
+        <label class="f" for="notes"><span id="notesLbl">Conditions or comments (printed in the review record)</span><textarea id="notes"></textarea></label>
+        <label class="f" for="signer">Name printed under the signature<input type="text" id="signer" value="HSE Manager"></label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="sub">Your signature (saved in this browser only)</div>
+        <div class="sigprev" id="sigPrev"><span class="sub">No signature saved yet</span></div>
+        <details id="sigSetup">
+          <summary>Draw or upload my signature</summary>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+            <canvas class="pad" id="pad" width="720" height="240" aria-label="Signature pad"></canvas>
+            <div class="row">
+              <button class="btn sm" id="padClear">Clear</button>
+              <button class="btn sm primary" id="padSave">Save drawn signature</button>
+              <label class="btn sm" for="sigFile" style="margin:0">Upload a photo of my signature</label>
+              <input type="file" id="sigFile" accept="image/*" hidden>
+              <button class="btn sm" id="sigDel">Remove saved</button>
+            </div>
+            <span class="sub">A photo on white paper works: the background is removed automatically.</span>
+          </div>
+        </details>
+      </div>
+    </div>
+    <label class="opt" id="ackRow" hidden><input type="checkbox" id="ack"> <span id="ackTxt"></span></label>
+    <div class="row">
+      <button class="btn primary" id="signBtn" disabled>Sign and prepare files</button>
+      <span class="msg" id="signMsg" role="status"></span>
+    </div>
+    <div class="row" id="outRow" hidden>
+      <button class="btn" id="saveSigned">Save signed permit (PDF)</button>
+      <button class="btn" id="saveRecord">Save review record (PDF)</button>
+      <button class="btn" id="saveBoth">Save both as one PDF</button>
+      <button class="btn" id="nextBtn">Next permit</button>
+    </div>
+    <div class="row" id="linkRow"></div>
+    <div class="sub">Claude's review is decision support. Nothing is signed until you press the button, and you remain the approver.</div>
+  </section>
+
+  <section class="card" aria-labelledby="h-hist">
+    <h2 id="h-hist"><b>4</b> Register</h2>
+    <div class="hist" id="hist"></div>
+    <div class="row"><button class="btn sm" id="csvBtn">Export register (CSV)</button><span class="sub">Kept in this browser. Export regularly.</span></div>
+  </section>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script>
+"use strict";
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+if (window.pdfjsLib) pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+/* ---------- reference data (measured from the four RPQIN forms, A4 points, top-down y) ---------- */
+const FORMS = {
+  "F.020": {name: "Work Permit", hx: 264, hb: 601, row: [614, 639], cols: [27, 162, 256, 382, 486, 563], sup: {lx1: 401, lt: 731, lb: 739, cx1: 565}},
+  "F.021": {name: "Permit to Work at Height", hx: 259, hb: 547, row: [561, 584], cols: [32, 162, 252, 382, 489, 563], sup: {lx1: 392, lt: 687, lb: 695, cx1: 570}, tags: ["height"]},
+  "F.022": {name: "Permit to Enter Confined Space", hx: 254, hb: 581, row: [592, 612], cols: [27, 148, 252, 378, 477, 563], sup: {lx1: 405, lt: 725, lb: 733, cx1: 565}, tags: ["confined"]},
+  "F.023": {name: "Hot Work Permit", hx: 263, hb: 559, row: [569, 594], cols: [32, 162, 261, 387, 480, 563], sup: {lx1: 406, lt: 709, lb: 717, cx1: 565}, tags: ["hot"]},
+};
+const TAGS = {
+  height: "Work at height", hot: "Hot work", confined: "Confined space", electrical: "Electrical", excavation: "Excavation",
+  chemical: "Chemicals", lifting: "Lifting", night: "Night work", road: "Road work", aquatic: "Water park plant / slides / pools",
+};
+const TAG_KW = {
+  height: /height|scaffold|ladder|roof|harness|elevated|mewp|cherry picker|aerial|ceiling|facade|canopy/i,
+  hot: /weld|grind|cutting|brazing|torch|hot work|solder|spark|gas cutting/i,
+  confined: /confined|tank|manhole|sump|pit\b|chamber|duct|balance tank|culvert/i,
+  electrical: /electric|cable|panel|wiring|\bmcc\b|\bdb\b|switchgear|transformer|circuit|breaker/i,
+  excavation: /excavat|trench|dig\b|digging/i,
+  chemical: /chemical|chlorine|acid|paint|solvent|epoxy|coating|sealant|adhesive|coshh|resin/i,
+  lifting: /crane|lifting|hoist|forklift|rigging|chain block|boom/i,
+  night: /night/i,
+  road: /road work|asphalt|traffic|paving/i,
+  aquatic: /slide|pool|pump room|water park|filtration|lazy river|wave|plant room|dosing|surf|splash|jacuzzi|spa\b/i,
+};
+
+/* checklist definition: [id, group, text, keyword over attachments (optional), documentRequired] */
+const BASE = [
+  ["p_no", "P", "Permit number, request date and venue ticked"],
+  ["p_desc", "P", "Description of work, asset location and asset no./tag are specific"],
+  ["p_dates", "P", "Start and end dates and working hours are filled and acceptable (guest hours, events, heat rules)"],
+  ["p_contr", "P", "Contractor details, supervisor name and contact number provided"],
+  ["p_type", "P", "Type of work ticked matches the description and attachments"],
+  ["p_ppe", "P", "PPE and extra safety measures ticked suit the hazards"],
+  ["p_req", "P", "PTW requester has signed"],
+  ["p_ack", "P", "Department in-charge has acknowledged"],
+  ["p_sup", "P", "Contractor supervisor declaration signed and dated"],
+  ["p_comp", "P", "Companion permit attached where needed (hot work, work at height, confined space)"],
+  ["m_att", "M", "Method statement attached"],
+  ["m_scope", "M", "Scope, location and dates match the permit", /scope|location|area|description of work|purpose/i],
+  ["m_steps", "M", "Work is broken into a clear sequence of steps", /step|sequence|procedure|stage|phase/i],
+  ["m_haz", "M", "Hazards are identified for the steps", /hazard/i],
+  ["m_ctrl", "M", "Control measures are specific, not generic", /control|mitigat|precaution|measure/i],
+  ["m_ppe", "M", "PPE and equipment are listed", /ppe|helmet|gloves|harness|safety shoes|goggles|equipment/i],
+  ["m_people", "M", "Supervision, competence and training of workers are stated", /supervis|competen|train|certif|manpower|personnel/i],
+  ["m_emerg", "M", "Emergency, first aid and rescue arrangements are stated", /emergenc|first aid|evacuat|rescue/i],
+  ["m_sign", "M", "Method statement is dated and authorised (prepared / approved by)", /prepared by|approved by|signature|signed|reviewed by|authori[sz]ed/i],
+  ["r_att", "R", "Risk assessment attached"],
+  ["r_match", "R", "Covers every hazard of this activity and location"],
+  ["r_rate", "R", "Risk rated before and after controls (likelihood x severity)", /likelihood|severity|probability|risk (rating|level|matrix|score)|residual|\bL\s*x\s*S\b/i],
+  ["r_ctrl", "R", "Controls follow the hierarchy (eliminate, substitute, engineer, administer, PPE)", /control|mitigat|elimin|substitut|engineering/i],
+  ["r_resid", "R", "Residual risk is acceptable (low or medium)", /residual/i],
+  ["r_sign", "R", "Assessor and approver named, signed and dated", /prepared by|assessed by|approved by|signature|signed|date/i],
+];
+const BY_TAG = {
+  height: [
+    ["h_anchor", "Harness, anchor points, edge protection or net are specified", /harness|anchor|lanyard|edge protection|fall arrest|guardrail|safety net/i],
+    ["h_rescue", "Rescue plan for a suspended or fallen worker", /rescue/i],
+    ["h_below", "Area below is barricaded against falling objects", /barricad|exclusion|drop zone|toe board|area below/i],
+    ["h_weather", "Wind, weather and heat are considered", /wind|weather|heat|temperature/i],
+    ["h_equip", "Scaffold, ladders or platform are inspected and certified", /inspect|certif|tag|scaftag|green tag/i],
+  ],
+  hot: [
+    ["hw_flam", "Flammable and combustible materials removed or protected", /flammable|combustible/i],
+    ["hw_ext", "Extinguisher and fire blanket at the work point", /extinguisher|fire blanket/i],
+    ["hw_watch", "Fire watch assigned for the work and 30 minutes after", /fire\s*watch/i],
+    ["hw_detect", "Smoke or heat detector isolation arranged with Security", /detector|smoke|alarm|isolat/i],
+    ["hw_trained", "Operators are trained and certified", /train|certif|competen/i],
+  ],
+  confined: [
+    ["cs_atm", "Atmosphere test (oxygen, flammable, toxic) before and during entry", /gas test|atmosphere|oxygen|\bo2\b|multi.?gas|\blel\b|h2s/i],
+    ["cs_watch", "Standby person outside and communication link", /standby|attendant|watch(er|man)|communication|radio/i],
+    ["cs_rescue", "Rescue plan and equipment (tripod, breathing apparatus)", /rescue|tripod|breathing apparatus|\bba\b|scba/i],
+    ["cs_isolate", "Pipes, flows and energy sources isolated and sealed", /isolat|blank|lock|valve|drain/i],
+    ["cs_vent", "Ventilation or extraction provided", /ventilat|blower|extract|fan/i],
+    ["cs_persons", "Number of persons entering is stated", null],
+  ],
+  electrical: [
+    ["el_loto", "Lock-out / tag-out and isolation proved", /lock.?out|loto|tag.?out|isolat/i],
+    ["el_comp", "Competent, authorised electrician", /competent|licensed|certified|authori[sz]ed/i],
+    ["el_test", "Testing before touch (prove dead) and RCD protection", /prove dead|test|voltage|rcd|megger/i],
+  ],
+  excavation: [
+    ["ex_services", "Underground services checked (drawings, scan)", /service|utilit|cable|drawing|scan/i],
+    ["ex_shore", "Shoring, barricades and safe access", /shor|barricad|batter|bench|support|access/i],
+  ],
+  chemical: [
+    ["ch_msds", "SDS / COSHH assessment attached", /msds|\bsds\b|coshh|safety data/i],
+    ["ch_vent", "Ventilation, spill control and respiratory protection", /ventilat|spill|respirator|mask/i],
+  ],
+  lifting: [
+    ["lf_plan", "Lifting plan, certified equipment and competent rigger", /lifting plan|rigging|rigger|sling|certif|\bswl\b|crane/i],
+  ],
+  night: [["ni_light", "Adequate lighting, reflective vests, beacons", /light|reflective|vest|beacon/i]],
+  road: [["rd_traffic", "Traffic management, signage and marshals", /traffic|marshal|cone|barrier|signage/i]],
+  aquatic: [
+    ["aq_isol", "Slide, pump, dosing or pool plant isolated and guests segregated", /isolat|lock|guest|segregat|barricad|closed|shut/i],
+    ["aq_chem", "Chemical (chlorine / acid) handling and storage addressed where relevant", /chlorine|acid|chemical|dosing|sds/i],
+  ],
+};
+const GROUPS = {P: "Permit form", M: "Method statement", R: "Risk assessment"};
+const TAG_GROUP = k => TAGS[k];
+
+/* ---------- state ---------- */
+const S = {permit: null, docs: [], form: null, tags: new Set(), items: [], ai: null, box: null, boxPage: 0,
+  sig: null, out: null, pageIdx: 0, pageCanvasReady: false, nextId: 1};
+
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+const qatarNow = () => new Intl.DateTimeFormat("en-GB", {timeZone: "Asia/Qatar", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false}).format(new Date()).replace(",", "");
+$("#stamp").textContent = "Doha time " + qatarNow();
+
+/* ---------- reading documents ---------- */
+function linesFromItems(items) {
+  const rows = [];
+  for (const it of [...items].sort((a, b) => b.y - a.y || a.x - b.x)) {
+    const r = rows.find(r => Math.abs(r.y - it.y) < 3);
+    if (r) r.items.push(it); else rows.push({y: it.y, items: [it]});
+  }
+  return rows.sort((a, b) => b.y - a.y).map(r => r.items.sort((a, b) => a.x - b.x).map(i => i.str).join("  ").replace(/\s+/g, " ").trim()).filter(Boolean);
+}
+async function readPdf(bytes) {
+  const pdf = await pdfjsLib.getDocument({data: bytes.slice(0)}).promise;
+  const pages = [];
+  for (let p = 1; p <= Math.min(pdf.numPages, 60); p++) {
+    const page = await pdf.getPage(p);
+    const vp = page.getViewport({scale: 1});
+    const tc = await page.getTextContent();
+    const items = tc.items.filter(i => i.str && i.str.trim()).map(i => ({str: i.str, x: i.transform[4], y: i.transform[5], w: i.width}));
+    pages.push({w: vp.width, h: vp.height, items, lines: linesFromItems(items)});
+  }
+  return {pdf, pages, text: pages.map(p => p.lines.join("\n")).join("\n")};
+}
+async function readAttachment(file) {
+  const ext = file.name.split(".").pop().toLowerCase();
+  const buf = await file.arrayBuffer();
+  if (ext === "pdf") { const r = await readPdf(buf); return {text: r.text, pdf: r.pdf, pages: r.pages.length}; }
+  if (ext === "docx") { const r = await mammoth.extractRawText({arrayBuffer: buf}); return {text: r.value, pdf: null, pages: 0}; }
+  return {text: new TextDecoder().decode(buf), pdf: null, pages: 0};
+}
+function guessKind(name, text) {
+  const s = name + " " + text.slice(0, 1500);
+  const ms = /method\s*statement|swms|work\s*procedure|\bmos\b|\bmst?\b/i.test(s), ra = /risk\s*assess|\bjsa\b|\bhira\b|job safety|\bra\b/i.test(s);
+  return ms && ra ? "both" : ms ? "ms" : ra ? "ra" : "other";
+}
+
+/* ---------- permit analysis ---------- */
+function detectForm(text) { const m = text.match(/RPQIN\.?\s*OHS\.?\s*F\.?\s*(\d{3})/i); const c = m ? "F." + m[1] : null; return FORMS[c] ? c : null; }
+const STOPS = ["Permit Number", "Renewal Number", "Request Date", "Type of work", "Description of System/Asset", "Asset Location", "Asset No\\.?/?Tag", "Responsible", "Start Date", "Working Timings", "End Date", "Details of Contractor", "Safety Requirements", "BASIC PPE", "From", "To\\b", "Known Hazards", "Total person", "Name of Contractor", "Contact Number", "I acknowledged", "Department/Discipline", "Renewal", "Number\\s*:", "Asset\\s*No", "Signature\\s*:", "correct hazards", "whatever happens", "A Safe Work Method", "This permit covers", "[\u25A1\u2610\u2611\u2612]", "N\\.B", "WORK SUPERVISOR"];
+function field(text, label) {
+  const flat = text.replace(/\s+/g, " ");
+  const stops = STOPS.filter(s => !new RegExp("^" + s, "i").test(label.replace(/[^A-Za-z]/g, ""))).join("|");
+  const m = flat.match(new RegExp(label + "\\s*:?\\s*(.*?)\\s*(?=(?:" + stops + ")\\s*:?|$)", "i"));
+  const v = m ? m[1].replace(/^[:\-\s]+|[:\-\s]+$/g, "") : "";
+  return v.length >= 2 && !/^[\u25A1\u2610\u2611\u2612]/.test(v) ? v : "";
+}
+function tickedTypes(text) {
+  const out = []; const re = /[☑☒✓✔✅]\s*([A-Za-z][A-Za-z ]{2,28})/g; let m;
+  while ((m = re.exec(text))) out.push(m[1].trim());
+  return out;
+}
+function findHeader(page) {
+  const its = page.items; let joined = "", starts = [];
+  its.forEach(i => { starts.push(joined.length); joined += i.str + " "; });
+  const m = /Approved\s*By\s*\(?\s*Safety/i.exec(joined); if (!m) return null;
+  let k = starts.length - 1; while (k > 0 && starts[k] > m.index) k--;
+  return its[k];
+}
+function inkRatio(cv, scale, x0, top, x1, bottom, ins = 3) {
+  const  ctx = cv.getContext("2d", {willReadFrequently: true});
+  const X = Math.max(0, Math.round((x0 + ins) * scale)), Y = Math.max(0, Math.round((top + ins) * scale));
+  const W = Math.max(1, Math.round((x1 - x0 - 2 * ins) * scale)), H = Math.max(1, Math.round((bottom - top - 2 * ins) * scale));
+  const d = ctx.getImageData(X, Y, Math.min(W, cv.width - X), Math.min(H, cv.height - Y)).data;
+  let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] * .3 + d[i + 1] * .59 + d[i + 2] * .11 < 150) n++;
+  return n / (d.length / 4);
+}
+
+/* ---------- loading ---------- */
+const msg = (el, t, cls) => { el.textContent = t || ""; el.className = "msg" + (cls ? " " + cls : ""); };
+function titleForm(t) {
+  const h = t.slice(0, 500);
+  if (/hot\s*work\s*permit/i.test(h)) return "F.023";
+  if (/(work(ing)?\s*at\s*height)/i.test(h)) return "F.021";
+  if (/confined\s*space/i.test(h)) return "F.022";
+  if (/work\s*permit/i.test(h)) return "F.020";
+  return null;
+}
+async function readDocxPermit(f) {
+  const buf = await f.arrayBuffer(), zip = await JSZip.loadAsync(buf.slice(0)), raw = await mammoth.extractRawText({arrayBuffer: buf.slice(0)});
+  let hf = "";
+  for (const n of Object.keys(zip.files)) if (/^word\/(header|footer)\d*\.xml$/.test(n)) hf += " " + (await zip.file(n).async("string")).split("</w:p>").map(par => [...par.matchAll(/<w:t[^>]*>([^<]*)<\/w:t>/g)].map(m => m[1]).join("")).join(" ");
+  return {buf, zip, text: raw.value, hf};
+}
+async function classify(f) {
+  const ext = f.name.split(".").pop().toLowerCase(), info = {f, ext, kind: "other", form: null, sparse: false, nameHit: /permit|ptw|rpqin|\bF\.?0\d\d/i.test(f.name)};
+  if (ext === "pdf") { info.kind = "pdf"; info.r = await readPdf(await f.arrayBuffer()); info.form = detectForm(info.r.text); info.sparse = info.r.text.replace(/\s/g, "").length < 150; if (!info.form && info.nameHit && !info.sparse) info.form = titleForm(info.r.text); }
+  else if (ext === "docx") { info.kind = "docx"; info.d = await readDocxPermit(f); info.form = detectForm(info.d.hf + " " + info.d.text) || (info.nameHit ? titleForm(info.d.hf) : null); }
+  else if (/^(jpe?g|png)$/.test(ext)) info.kind = "image";
+  return info;
+}
+async function imageToPdf(f) {
+  const {PDFDocument} = PDFLib, doc = await PDFDocument.create(), b = new Uint8Array(await f.arrayBuffer());
+  const img = /png$/i.test(f.name) ? await doc.embedPng(b) : await doc.embedJpg(b);
+  const w = 595.28, h = w * img.height / img.width, pg = doc.addPage([w, h]);
+  pg.drawImage(img, {x: 0, y: 0, width: w, height: h});
+  return (await doc.save()).buffer;
+}
+function placeBox() {
+  const P = S.permit, r = P.pages; let found = null, pi = 0;
+  r.forEach((p, i) => { if (!found) { const h = findHeader(p); if (h) { found = h; pi = i; } } });
+  S.boxPage = pi; S.pageIdx = pi; S.layout = null; S.manual = false;
+  if (found && S.form) {
+    const sp = FORMS[S.form], pg = r[pi], dx = found.x - sp.hx, dyDown = (pg.h - found.y + 1.7) - sp.hb;
+    S.layout = {dx, dy: dyDown};
+    S.box = {x: sp.cols[2] + dx + 1, top: sp.row[0] + dyDown + 1, w: sp.cols[3] - sp.cols[2] - 2, h: sp.row[1] - sp.row[0] - 2};
+  } else if (found) {
+    S.box = {x: found.x - 4, top: r[pi].h - found.y + 12, w: 126, h: 24};
+  } else if (S.form) {
+    const sp = FORMS[S.form], kx = r[0].w / 595.28, ky = r[0].h / 841.89; S.boxPage = 0; S.pageIdx = 0;
+    S.box = {x: (sp.cols[2] + 1) * kx, top: (sp.row[0] + 1) * ky, w: (sp.cols[3] - sp.cols[2] - 2) * kx, h: (sp.row[1] - sp.row[0] - 2) * ky};
+  } else { S.manual = true; S.box = {x: 260, top: 560, w: 126, h: 24}; }
+  $("#boxHint").textContent = S.manual ? "Safety Manager box not found: tap the permit where the signature should go" : 'Your signature always goes in the "Approved By (Safety Manager)" box';
+}
+function resetForNew() { S.out = null; $("#outRow").hidden = true; $("#linkRow").innerHTML = ""; S.ai = null; $("#findings").innerHTML = ""; S.scanSigned = null; S.docxInk = null; }
+async function loadPermit(info) {
+  msg($("#loadMsg"), "Reading permit…");
+  try {
+    resetForNew();
+    if (info.kind === "docx") return await loadDocxPermit(info);
+    const bytes = info.kind === "image" ? await imageToPdf(info.f) : await info.f.arrayBuffer();
+    const r = info.kind === "image" ? await readPdf(bytes) : (info.r || await readPdf(bytes));
+    S.permit = {name: info.f.name, kind: "pdf", bytes, pdf: r.pdf, pages: r.pages, text: r.text, scan: r.text.replace(/\s/g, "").length < 150};
+    S.form = info.form || detectForm(r.text);
+    $("#docView").hidden = true; $("#docNote").hidden = true; $("#stage").hidden = false; $("#pagerRow").hidden = false;
+    placeBox(); await renderPage(S.pageIdx);
+    $("#viewer").hidden = false; drawBox();
+    if (S.permit.scan) {
+      msg($("#loadMsg"), "This permit is a scan or photo. Claude is reading it…");
+      await identifyScan();
+    }
+    msg($("#loadMsg"), S.form ? `Permit loaded: ${S.form} ${FORMS[S.form].name}${S.permit.scan ? " (scan, read by Claude)" : ""}.` : "Permit loaded, but the form number was not recognised. Check the checklist and the signature box.", S.form ? "ok" : "err");
+    buildReview(true);
+  } catch (e) { console.error(e); msg($("#loadMsg"), "Could not read this permit: " + (e?.message || e) + ". Try saving it again as a PDF and drop it in once more.", "err"); }
+}
+async function loadDocxPermit(info) {
+  const d = info.d || await readDocxPermit(info.f);
+  S.permit = {name: info.f.name, kind: "docx", zip: d.zip, buf: d.buf, text: d.text, pages: [], pdf: null, bytes: null};
+  S.form = info.form || detectForm(d.hf + " " + d.text) || titleForm(d.hf);
+  S.box = null; S.layout = null; S.manual = false;
+  S.docxInk = await docxInk(d.zip);
+  $("#docView").innerHTML = (await mammoth.convertToHtml({arrayBuffer: d.buf.slice(0)})).value;
+  $("#docView").hidden = false; $("#docNote").hidden = false; $("#stage").hidden = true; $("#pagerRow").hidden = true; $("#viewer").hidden = false;
+  msg($("#loadMsg"), S.form ? `Permit loaded: ${S.form} ${FORMS[S.form].name} (Word file).` : "Word permit loaded, but the form number was not recognised.", S.form ? "ok" : "err");
+  buildReview(true);
+}
+function docxCells(xml) {
+  const NS = "http://schemas.openxmlformats.org/wordprocessingml/2006/main", doc = new DOMParser().parseFromString(xml, "application/xml");
+  if (doc.getElementsByTagName("parsererror").length) throw new Error("The Word file could not be parsed.");
+  const tcs = [...doc.getElementsByTagNameNS(NS, "tc")], txt = n => [...n.getElementsByTagNameNS(NS, "t")].map(t => t.textContent).join("");
+  const has = n => n.getElementsByTagNameNS(NS, "drawing").length > 0 || n.getElementsByTagNameNS(NS, "pict").length > 0;
+  const kids = tr => [...tr.childNodes].filter(n => n.localName === "tc");
+  const below = re => {
+    const tc = tcs.find(c => re.test(txt(c)) && !/DOFM/i.test(txt(c))); if (!tc) return null;
+    const tr = tc.parentNode, idx = kids(tr).indexOf(tc); let nx = tr.nextSibling; while (nx && nx.localName !== "tr") nx = nx.nextSibling;
+    return nx ? (kids(nx)[idx] || null) : null;
+  };
+  return {doc, NS, tcs, txt, has, below};
+}
+async function docxInk(zip) {
+  try {
+    const c = docxCells(await zip.file("word/document.xml").async("string")), filled = x => x ? (c.has(x) || c.txt(x).trim().length > 1) : null;
+    const sup = c.tcs.find(x => /Signature\s*:/.test(c.txt(x)) && /Contact/i.test(c.txt(x)));
+    let supOk = null;
+    if (sup) supOk = c.has(sup) || [...sup.getElementsByTagNameNS(c.NS, "p")].some(p => /^\s*Signature\s*:\s*\S{2,}/.test(c.txt(p)));
+    return {req: filled(c.below(/PTW\s*Requester/i)), ack: filled(c.below(/Acknowledged\s*by/i)), sup: supOk, sm: !!c.below(/Approved\s*By\s*\(?\s*Safety/i)};
+  } catch (e) { console.warn(e); return null; }
+}
+async function identifyScan() {
+  const sample = await (window.claude?.use ? claude.use("sample") : null), lim = sample ? await sample.limits().catch(() => ({})) : {};
+  if (!sample || !lim.images) { msg($("#loadMsg"), "This permit is a scan or photo and Claude image reading is not available here. Tick the checklist by hand, or send the typed PDF or Word version.", "err"); return; }
+  const blobs = await pageBlobs(S.permit.pdf, S.permit.pages.length, 1.6);
+  const prompt = `This is a scanned or photographed hotel work permit form of Rixos Premium Qetaifan Island North (forms RPQIN.OHS.F.020 Work Permit, F.021 Work at Height, F.022 Confined Space, F.023 Hot Work). Read it carefully and return ONLY this JSON:
+{"form":"F.020|F.021|F.022|F.023|unknown",
+ "text":"a faithful plain-text transcription of every printed label and every handwritten or typed entry, one line per row, writing ticked boxes as ☑ and empty boxes as □",
+ "box":{"page":1,"x0":0.0,"y0":0.0,"x1":0.0,"y1":0.0} or null,
+ "signed":{"requester":true,"acknowledged":true,"supervisor":true}}
+"box" is the signature cell directly under the heading "Approved By (Safety Manager)" as fractions (0 to 1) of the page width and height measured from the top-left corner; null if you cannot find it. "signed" says whether the PTW requester box, the Department in-charge box and the contractor "Signature:" line each contain a signature or mark.`;
+  const r = await sample.json(prompt, {images: blobs.slice(0, lim.images.maxCount || 3), modelTier: "complex", cache: false});
+  if (FORMS[r.form]) S.form = r.form;
+  if (r.text) S.permit.text = String(r.text);
+  S.scanSigned = r.signed || null;
+  placeBox();
+  const b = r.box;
+  if (b && [b.x0, b.y0, b.x1, b.y1].every(v => typeof v === "number") && b.x1 > b.x0 && b.y1 > b.y0 && b.x1 <= 1.01 && b.y1 <= 1.01) {
+    const pi = Math.max(0, Math.min(S.permit.pages.length - 1, (b.page || 1) - 1)), pg = S.permit.pages[pi];
+    S.boxPage = pi; S.manual = false; S.box = {x: b.x0 * pg.w, top: b.y0 * pg.h, w: (b.x1 - b.x0) * pg.w, h: (b.y1 - b.y0) * pg.h};
+  }
+  await renderPage(S.boxPage); drawBox();
+}
+const pg0 = i => S.permit.pages[i];
+async function renderPage(i) {
+  const page = await S.permit.pdf.getPage(i + 1);
+  const scale = 2, vp = page.getViewport({scale});
+  const cv = $("#pageCv"); cv.width = vp.width; cv.height = vp.height;
+  await page.render({canvasContext: cv.getContext("2d", {willReadFrequently: true}), viewport: vp}).promise;
+  S.pageIdx = i; S.scale = scale;
+  $("#pgInfo").textContent = `Page ${i + 1} of ${S.permit.pages.length}`;
+  $("#prevP").disabled = i === 0; $("#nextP").disabled = i === S.permit.pages.length - 1;
+  drawBox();
+}
+function drawBox() {
+  const sb = $("#sigbox"), st = $("#stage");
+  if (!S.permit || !S.box || S.pageIdx !== S.boxPage) { sb.style.display = "none"; return; }
+  const p = pg0(S.pageIdx), k = st.clientWidth / p.w;
+  sb.style.display = "flex";
+  Object.assign(sb.style, {left: S.box.x * k + "px", top: S.box.top * k + "px", width: S.box.w * k + "px", height: S.box.h * k + "px"});
+  sb.className = "sigbox" + (S.out ? " signed" : "");
+  sb.innerHTML = S.sig ? `<img alt="" src="${S.sig}">` : `<span class="sub" style="font-size:10px;line-height:1.1">Safety Manager</span>`;
+}
+window.addEventListener("resize", drawBox);
+$("#stage").addEventListener("click", e => {
+  if (!S.permit || !S.manual) return;
+  const st = $("#stage"), r = st.getBoundingClientRect(), p = pg0(S.pageIdx), k = p.w / r.width;
+  S.boxPage = S.pageIdx;
+  S.box = {...S.box, x: (e.clientX - r.left) * k - S.box.w / 2, top: (e.clientY - r.top) * k - S.box.h / 2};
+  drawBox();
+});
+$("#prevP").onclick = () => renderPage(S.pageIdx - 1);
+$("#nextP").onclick = () => renderPage(S.pageIdx + 1);
+
+async function addAttachments(files) {
+  msg($("#loadMsg"), "Reading attachments…");
+  for (const f of files) {
+    try {
+      const r = await readAttachment(f);
+      S.docs.push({id: S.nextId++, name: f.name, text: r.text, pdf: r.pdf, pages: r.pages, kind: guessKind(f.name, r.text), scanned: r.text.replace(/\s/g, "").length < 80 * Math.max(1, r.pages || 1)});
+    } catch (e) { console.error(e); msg($("#loadMsg"), `Could not read ${f.name}.`, "err"); return; }
+  }
+  msg($("#loadMsg"), "");
+  renderDocs(); if (S.permit) buildReview(false);
+}
+function renderDocs() {
+  $("#docList").innerHTML = S.docs.map(d => `<div class="doc" data-id="${d.id}">
+    <span class="n" title="${esc(d.name)}">${esc(d.name)}</span>
+    <select aria-label="Document type"><option value="ms"${d.kind === "ms" ? " selected" : ""}>Method statement</option><option value="ra"${d.kind === "ra" ? " selected" : ""}>Risk assessment</option><option value="both"${d.kind === "both" ? " selected" : ""}>MS + RA</option><option value="other"${d.kind === "other" ? " selected" : ""}>Other</option></select>
+    <button class="x" aria-label="Remove ${esc(d.name)}">×</button></div>
+    ${d.scanned ? `<div class="warnnote">${esc(d.name)} has little or no readable text (scan or photo). Claude will read its page images if available; otherwise review it by eye.</div>` : ""}`).join("");
+}
+$("#docList").addEventListener("change", e => { const id = +e.target.closest(".doc")?.dataset.id; const d = S.docs.find(x => x.id === id); if (d) { d.kind = e.target.value; if (S.permit) buildReview(false); } });
+$("#docList").addEventListener("click", e => { if (!e.target.classList.contains("x")) return; const id = +e.target.closest(".doc").dataset.id; S.docs = S.docs.filter(d => d.id !== id); renderDocs(); if (S.permit) buildReview(false); });
+
+async function handleFiles(files) {
+  const infos = [], bad = [];
+  msg($("#loadMsg"), "Reading files…");
+  for (const f of files) { try { infos.push(await classify(f)); } catch (e) { console.error(e); bad.push(f.name); } }
+  const permit = infos.find(i => i.form && i.kind !== "other") || infos.find(i => i.nameHit && ["pdf", "docx", "image"].includes(i.kind))
+    || infos.find(i => i.kind === "image") || infos.find(i => i.kind === "pdf" && i.sparse);
+  const atts = infos.filter(i => i !== permit && i.kind !== "image").map(i => i.f);
+  if (atts.length) await addAttachments(atts);
+  if (permit) await loadPermit(permit);
+  else if (!S.permit) msg($("#loadMsg"), bad.length ? `Could not read: ${bad.join(", ")}.` : "No work permit found among these files. Drop the permit (PDF, Word or photo) too.", "err");
+  else if (bad.length) msg($("#loadMsg"), `Could not read: ${bad.join(", ")}.`, "err");
+}
+{
+  const z = $("#dropAll"), inp = $("#fileAll");
+  inp.addEventListener("change", () => { handleFiles(inp.files); inp.value = ""; });
+  z.addEventListener("dragover", e => { e.preventDefault(); z.classList.add("over"); });
+  z.addEventListener("dragleave", () => z.classList.remove("over"));
+  z.addEventListener("drop", e => { e.preventDefault(); z.classList.remove("over"); handleFiles(e.dataTransfer.files); });
+}
+
+/* ---------- checklist ---------- */
+const attText = kinds => S.docs.filter(d => kinds.includes(d.kind)).map(d => d.text).join("\n");
+function buildReview(fresh) {
+  const P = S.permit; if (!P) return;
+  $("#reviewEmpty").style.display = "none"; const rb = $("#reviewBody"); rb.hidden = false; rb.style.display = "flex";
+  $("#formName").textContent = S.form ? `${S.form} ${FORMS[S.form].name}` : "unrecognised";
+  const text = P.text;
+  const desc = field(text, "Description of System/Asset");
+  if (fresh) {
+    S.tags = new Set(FORMS[S.form]?.tags || []);
+    const ticked = tickedTypes(text).join(" ").toLowerCase();
+    const map = {hot: /hot work/, confined: /confined/, electrical: /electrical/, height: /height/, excavation: /excavation/, night: /night/, road: /road/};
+    for (const [k, re] of Object.entries(map)) if (re.test(ticked)) S.tags.add(k);
+    const probe = desc + " " + field(text, "Asset Location") + " " + field(text, "Details of Contractor").slice(0, 200);
+    for (const [k, re] of Object.entries(TAG_KW)) if (re.test(probe)) S.tags.add(k);
+    if (/water park|beach/i.test(text) && /slide|pool|pump/i.test(probe)) S.tags.add("aquatic");
+  }
+  renderTags();
+  const prev = new Map(S.items.map(i => [i.id, i]));
+  S.items = [];
+  const add = (id, group, textv, kw) => { const o = prev.get(id); S.items.push({id, group, text: textv, kw, state: o?.source === "manual" || o?.source === "ai" ? o.state : null, source: o?.source === "manual" || o?.source === "ai" ? o.source : null, note: o?.source === "manual" || o?.source === "ai" ? o.note : ""}); };
+  for (const [id, g, t, kw] of BASE) add(id, g, t, kw);
+  for (const k of Object.keys(TAGS)) if (S.tags.has(k)) for (const [id, t, kw] of BY_TAG[k] || []) add(id, k, t, kw);
+  autoTick();
+  renderChecklist();
+}
+function autoTick() {
+  const P = S.permit, text = P.text;
+  const msT = attText(["ms", "both"]), raT = attText(["ra", "both"]), all = msT + "\n" + raT;
+  const set = (id, state, note) => { const it = S.items.find(i => i.id === id); if (it && it.source !== "manual" && it.source !== "ai") { it.state = state; it.source = state ? "auto" : null; it.note = note || ""; } };
+  // permit fields
+  const f = n => field(text, n);
+  const pno = f("Permit Number"), rd = f("Request Date");
+  const venue = /[☑☒✓✔]\s*(Hotel|Water Park|Beach Club|Retail)/i.test(text);
+  set("p_no", pno && rd ? (venue ? "yes" : null) : "no", `Permit no: ${pno || "empty"} · Request date: ${rd || "empty"}${venue ? "" : " · venue tick not detected"}`);
+  const d = f("Description of System/Asset"), loc = f("Asset Location"), tag = f("Asset No\\.?/?Tag");
+  set("p_desc", d && loc ? "yes" : "no", `Description: ${d ? d.slice(0, 70) : "empty"} · Location: ${loc ? loc.slice(0, 40) : "empty"} · Tag: ${tag || "empty"}`);
+  const sd = f("Start Date"), ed = f("End Date");
+  set("p_dates", sd && ed ? "yes" : "no", `Start: ${sd || "empty"} · End: ${ed || "empty"} (check the hours yourself)`);
+  const cd = f("Details of Contractor"), cn = f("Name of Contractor"), ct = f("Contact Number");
+  set("p_contr", (cd && cd.length > 4) && (cn || ct) ? "yes" : "no", `Details: ${cd ? cd.slice(0, 50) : "empty"} · Supervisor: ${cn || "empty"} · Contact: ${ct || "empty"}`);
+  // ink in signature cells
+  const sp = FORMS[S.form], cv = $("#pageCv");
+  if (sp && S.layout && S.pageIdx === S.boxPage) {
+    const {dx, dy} = S.layout, sc = S.scale;
+    const col = k => inkRatio(cv, sc, sp.cols[k] + dx, sp.row[0] + dy, sp.cols[k + 1] + dx, sp.row[1] + dy);
+    const r0 = col(0), r1 = col(1);
+    set("p_req", r0 > .002 ? "yes" : "no", r0 > .002 ? "Mark or signature found in the requester box" : "Requester box looks empty");
+    set("p_ack", r1 > .002 ? "yes" : "no", r1 > .002 ? "Mark or signature found in the acknowledgement box" : "Acknowledgement box looks empty");
+    const s = sp.sup, rs = inkRatio(cv, sc, s.lx1 + 6 + dx, s.lt - 3 + dy, s.cx1 - 3 + dx, s.lb + 2 + dy, 1);
+    set("p_sup", rs > .002 ? "yes" : "no", rs > .002 ? "Mark or signature found next to \"Signature:\"" : "Supervisor signature line looks empty");
+  }
+  const di = S.docxInk, sc = S.scanSigned;
+  const sg = (id, v, who) => { if (v === true || v === false) set(id, v ? "yes" : "no", v ? `Signature or mark found for ${who}` : `${who} looks empty`); };
+  if (S.permit.kind === "docx" && di) { sg("p_req", di.req, "the requester"); sg("p_ack", di.ack, "the department in-charge"); sg("p_sup", di.sup, "the contractor supervisor"); }
+  else if (sc && !S.layout) { sg("p_req", sc.requester, "the requester"); sg("p_ack", sc.acknowledged, "the department in-charge"); sg("p_sup", sc.supervisor, "the contractor supervisor"); }
+  const tk = tickedTypes(text);
+  if (!S.form) set("p_type", null, "Form not recognised");
+  const people = f("Total person involved");
+  // attachments
+  const hasMS = S.docs.some(x => ["ms", "both"].includes(x.kind)), hasRA = S.docs.some(x => ["ra", "both"].includes(x.kind));
+  set("m_att", hasMS ? "yes" : "no", hasMS ? S.docs.filter(x => ["ms", "both"].includes(x.kind)).map(x => x.name).join(", ") : "No method statement loaded");
+  set("r_att", hasRA ? "yes" : "no", hasRA ? S.docs.filter(x => ["ra", "both"].includes(x.kind)).map(x => x.name).join(", ") : "No risk assessment loaded");
+  const kw = (it, src, label) => {
+    if (!it.kw || it.source === "manual" || it.source === "ai") return;
+    if (!src) { it.state = null; it.source = null; it.note = `${label} not loaded`; return; }
+    if (src.replace(/\s/g, "").length < 80) { it.state = null; it.source = null; it.note = `${label} has no readable text, check by eye or use Claude`; return; }
+    const hit = src.match(it.kw);
+    it.state = hit ? "yes" : "no"; it.source = "auto"; it.note = hit ? `Found "${hit[0]}" in ${label}` : `Nothing like this found in ${label}`;
+  };
+  for (const it of S.items) {
+    if (it.id.startsWith("m_") && it.id !== "m_att") kw(it, msT || (hasMS ? "" : ""), "the method statement");
+    else if (it.id.startsWith("r_") && it.id !== "r_att") kw(it, raT, "the risk assessment");
+    else if (!/^[PMR]$/.test(it.group) && it.kw) kw(it, all, "the attachments");
+  }
+  const cs = S.items.find(i => i.id === "cs_persons"); if (cs && cs.source !== "manual" && cs.source !== "ai") { cs.state = /\d/.test(people) ? "yes" : "no"; cs.source = "auto"; cs.note = people ? "Persons: " + people : "Field is empty"; }
+  // companion permit hint
+  const need = [S.tags.has("hot") && S.form !== "F.023" && "Hot Work Permit F.023", S.tags.has("height") && S.form !== "F.021" && "Work at Height Permit F.021", S.tags.has("confined") && S.form !== "F.022" && "Confined Space Permit F.022"].filter(Boolean);
+  const cp = S.items.find(i => i.id === "p_comp"); if (cp && cp.source !== "manual" && cp.source !== "ai") { cp.state = need.length ? null : "na"; cp.source = need.length ? null : "auto"; cp.note = need.length ? "Needs: " + need.join(", ") + ". Confirm it is attached." : "No companion permit indicated"; }
+}
+function renderTags() {
+  $("#tags").innerHTML = Object.entries(TAGS).map(([k, v]) => `<button class="chip" data-k="${k}" aria-pressed="${S.tags.has(k)}">${esc(v)}</button>`).join("");
+}
+$("#tags").addEventListener("click", e => { const b = e.target.closest(".chip"); if (!b) return; const k = b.dataset.k; S.tags.has(k) ? S.tags.delete(k) : S.tags.add(k); buildReview(false); });
+$("#rebuildBtn").onclick = () => { S.items.forEach(i => { if (i.source === "auto") { i.state = null; i.source = null; } }); buildReview(false); };
+
+function renderChecklist() {
+  const order = ["P", "M", "R", ...Object.keys(TAGS)];
+  let html = "";
+  for (const g of order) {
+    const its = S.items.filter(i => i.group === g); if (!its.length) continue;
+    html += `<div class="group"><h3>${esc(GROUPS[g] || TAGS[g])}</h3>` + its.map(i => `<div class="item" data-id="${i.id}">
+      <div class="t">${esc(i.text)}${i.source ? `<span class="src ${i.source === "ai" ? "ai" : ""}">${i.source === "ai" ? "CLAUDE" : i.source === "auto" ? "AUTO" : "YOU"}</span>` : ""}</div>
+      <div class="seg" role="group" aria-label="${esc(i.text)}">
+        <button class="y" aria-pressed="${i.state === "yes"}" data-v="yes">Yes</button><button class="n" aria-pressed="${i.state === "no"}" data-v="no">No</button><button class="a" aria-pressed="${i.state === "na"}" data-v="na">N/A</button></div>
+      <div class="note">${esc(i.note)}</div></div>`).join("") + "</div>";
+  }
+  $("#checklist").innerHTML = html;
+  updateProgress();
+}
+$("#checklist").addEventListener("click", e => {
+  const b = e.target.closest(".seg button"); if (!b) return;
+  const it = S.items.find(i => i.id === b.closest(".item").dataset.id), v = b.dataset.v;
+  it.state = it.state === v ? null : v; it.source = it.state ? "manual" : null;
+  renderChecklist();
+});
+function updateProgress() {
+  const n = S.items.length, done = S.items.filter(i => i.state).length, no = S.items.filter(i => i.state === "no").length;
+  $("#prog").textContent = `${done} of ${n} answered · ${no} marked No`;
+  $("#meter").style.width = n ? (100 * done / n) + "%" : "0";
+  updateSignState();
+}
+
+/* ---------- Claude review ---------- */
+function clip(s, n) { return s.length > n ? s.slice(0, n) + "\n[...truncated]" : s; }
+async function pageBlobs(pdf, pages, scale) {
+  const out = [];
+  for (let p = 1; p <= Math.min(pages, 3); p++) {
+    const pg = await pdf.getPage(p), vp = pg.getViewport({scale}), c = document.createElement("canvas");
+    c.width = vp.width; c.height = vp.height; await pg.render({canvasContext: c.getContext("2d"), viewport: vp}).promise;
+    out.push(await new Promise(r => c.toBlob(r, "image/jpeg", .8)));
+  }
+  return out;
+}
+$("#aiBtn").onclick = async () => {
+  const btn = $("#aiBtn"), m = $("#aiMsg");
+  const sample = await (window.claude?.use ? claude.use("sample") : null);
+  if (!sample) { msg(m, "Claude review is not available in this view. Use the checklist by hand.", "err"); return; }
+  btn.disabled = true; m.innerHTML = '<span class="spin"></span> Claude is reading the permit and attachments…'; m.className = "msg";
+  try {
+    const lim = await sample.limits().catch(() => ({}));
+    const images = []; const note = [];
+    if (lim.images) {
+      if (S.permit.pdf && P().text.replace(/\s/g, "").length < 200) images.push(...await pageBlobs(S.permit.pdf, S.permit.pages.length, 1.4));
+      for (const d of S.docs) if (d.scanned && d.pdf && images.length < (lim.images.maxCount || 0) - 1) { const b = await pageBlobs(d.pdf, d.pages, 1.2); images.push(...b.slice(0, Math.max(0, lim.images.maxCount - images.length))); note.push(d.name); }
+    }
+    const items = S.items.map(i => ({id: i.id, check: i.text, current: i.state}));
+    const docs = S.docs.map(d => `=== ATTACHMENT: ${d.name} (treated as: ${({ms: "method statement", ra: "risk assessment", both: "method statement and risk assessment", other: "other"})[d.kind]}) ===\n${d.scanned ? "[little or no readable text; images may be attached]" : clip(d.text, 22000)}`).join("\n\n");
+    const prompt = `You are assisting the HSE Manager of Meryal Water Park (Rixos Premium Qetaifan Island North) and Azure Beach Club in Doha, Qatar. Review a contractor's permit to work together with its method statement (MS) and risk assessment (RA) before the HSE Manager signs. Be strict, concrete and brief. Judge only from the text and images given; never invent content. If something cannot be judged from what you were given, answer "unclear".
+
+Venue context: guests are present; water park plant, slides, pumps, chemical dosing and pools are safety-critical; Qatar summer heat rules apply (outdoor work stoppage 10:00 to 15:30 between 1 June and 15 September, and when WBGT is 32.1 C or more, unless exempt) so flag outdoor work scheduled in that window. Hot work needs a hot work permit with fire watch; work at height and confined space need their own permits; fire alarm isolation must be coordinated with Security.
+
+Permit form: ${S.form || "unknown"} ${FORMS[S.form]?.name || ""}
+Nature of work selected by the reviewer: ${[...S.tags].map(k => TAGS[k]).join(", ") || "none"}
+
+=== PERMIT TEXT (extracted; ticked boxes appear as ☑ and unticked as □) ===
+${clip(S.permit.text, 12000)}
+
+${docs || "(No attachments were provided.)"}
+
+Checklist to answer (use these ids exactly). For each id give state "yes", "no", "na" or "unclear" and a note of at most 18 words naming the evidence or the gap:
+${JSON.stringify(items)}
+
+Return ONLY this JSON:
+{"items":{"<id>":{"state":"yes|no|na|unclear","note":"..."}},
+ "ms":{"verdict":"adequate|gaps|inadequate|not_provided","summary":"2 sentences","gaps":["..."]},
+ "ra":{"verdict":"adequate|gaps|inadequate|not_provided","summary":"2 sentences","gaps":["..."]},
+ "permit_issues":["..."],
+ "conditions":["specific conditions to write on the permit if approved"],
+ "recommendation":"approve|approve_with_conditions|reject",
+ "rationale":"2 sentences"}`;
+    const r = await sample.json(prompt, {images: images.length ? images : undefined, modelTier: "complex", cache: false});
+    applyAI(r);
+    msg(m, "Claude's review is applied. Check the ticks and change anything you disagree with.", "ok");
+  } catch (e) {
+    console.error(e);
+    msg(m, e?.code === "not_granted" ? "Claude review was not allowed for this page." : e?.code === "rate_limited" ? "Too many requests. Wait a minute and try again." : "Claude could not complete the review. Try again, or tick by hand.", "err");
+  } finally { btn.disabled = false; }
+};
+const P = () => S.permit;
+function applyAI(r) {
+  S.ai = r;
+  for (const it of S.items) {
+    const a = r.items?.[it.id]; if (!a) continue;
+    if (it.source === "manual") continue;
+    if (["yes", "no", "na"].includes(a.state)) { it.state = a.state; it.source = "ai"; }
+    else { it.state = null; it.source = null; }
+    it.note = a.note || "";
+  }
+  renderChecklist(); renderFindings();
+  const rec = r.recommendation;
+  if (rec) { const v = {approve: "approve", approve_with_conditions: "conditions", reject: "reject"}[rec]; if (v) { document.querySelector(`input[name=dec][value=${v}]`).checked = true; syncNotes(); } }
+  if (r.conditions?.length && !$("#notes").value.trim()) $("#notes").value = r.conditions.map((c, i) => `${i + 1}. ${c}`).join("\n");
+  updateSignState();
+}
+function renderFindings() {
+  const r = S.ai; if (!r) { $("#findings").innerHTML = ""; return; }
+  const vc = v => ({adequate: "good", gaps: "warn", inadequate: "bad", not_provided: "bad"}[v] || "warn");
+  const doc = (t, d) => d ? `<div class="find ${vc(d.verdict)}"><h4>${t} <span class="pill ${vc(d.verdict)}">${esc((d.verdict || "").replace("_", " "))}</span></h4><div>${esc(d.summary)}</div>${d.gaps?.length ? `<ul>${d.gaps.map(g => `<li>${esc(g)}</li>`).join("")}</ul>` : ""}</div>` : "";
+  const rec = {approve: "good", approve_with_conditions: "warn", reject: "bad"}[r.recommendation] || "warn";
+  $("#findings").innerHTML = `<div class="find ${rec}"><h4>Claude recommends: ${esc((r.recommendation || "").replace(/_/g, " "))}</h4><div>${esc(r.rationale)}</div></div>`
+    + doc("Method statement", r.ms) + doc("Risk assessment", r.ra)
+    + (r.permit_issues?.length ? `<div class="find warn"><h4>Permit issues</h4><ul>${r.permit_issues.map(g => `<li>${esc(g)}</li>`).join("")}</ul></div>` : "");
+}
+
+/* ---------- signature ---------- */
+function setSig(url) { S.sig = url; store.set("ptw.sig", url); renderSig(); drawBox(); updateSignState(); }
+function renderSig() { $("#sigPrev").innerHTML = S.sig ? `<img alt="Saved signature" src="${S.sig}">` : '<span class="sub">No signature saved yet</span>'; }
+const pad = $("#pad"), pc = pad.getContext("2d"); let drawing = false, drawn = false;
+pc.lineWidth = 4; pc.lineCap = "round"; pc.lineJoin = "round"; pc.strokeStyle = "#0b2a6b";
+const pp = e => { const r = pad.getBoundingClientRect(); return [(e.clientX - r.left) * pad.width / r.width, (e.clientY - r.top) * pad.height / r.height]; };
+pad.addEventListener("pointerdown", e => { drawing = true; drawn = true; pad.setPointerCapture(e.pointerId); const [x, y] = pp(e); pc.beginPath(); pc.moveTo(x, y); pc.lineTo(x + .1, y + .1); pc.stroke(); });
+pad.addEventListener("pointermove", e => { if (!drawing) return; const [x, y] = pp(e); pc.lineTo(x, y); pc.stroke(); });
+for (const ev of ["pointerup", "pointercancel"]) pad.addEventListener(ev, () => { drawing = false; });
+$("#padClear").onclick = () => { pc.clearRect(0, 0, pad.width, pad.height); drawn = false; };
+function cropInk(cv) {
+  const ctx = cv.getContext("2d"), d = ctx.getImageData(0, 0, cv.width, cv.height), a = d.data;
+  let x0 = cv.width, y0 = cv.height, x1 = 0, y1 = 0;
+  for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) if (a[(y * cv.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 <= x0) return null;
+  const m = 6, w = x1 - x0 + 2 * m, h = y1 - y0 + 2 * m, o = document.createElement("canvas"); o.width = w; o.height = h;
+  o.getContext("2d").drawImage(cv, x0 - m, y0 - m, w, h, 0, 0, w, h); return o.toDataURL("image/png");
+}
+$("#padSave").onclick = () => { if (!drawn) return; const u = cropInk(pad); if (u) { setSig(u); $("#sigSetup").open = false; } };
+$("#sigDel").onclick = () => { S.sig = null; try { localStorage.removeItem("ptw.sig"); } catch {} renderSig(); drawBox(); updateSignState(); };
+$("#sigFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  const img = new Image(); img.onload = () => {
+    const sc = Math.min(1, 900 / img.width), c = document.createElement("canvas"); c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+    const x = c.getContext("2d"); x.drawImage(img, 0, 0, c.width, c.height);
+    const d = x.getImageData(0, 0, c.width, c.height), a = d.data;
+    for (let i = 0; i < a.length; i += 4) { const l = a[i] * .3 + a[i + 1] * .59 + a[i + 2] * .11; const al = Math.max(0, Math.min(1, (215 - l) / 90)); a[i + 3] = Math.round(al * 255); if (al > 0) { a[i] = Math.min(a[i], 40); a[i + 1] = Math.min(a[i + 1], 50); a[i + 2] = Math.min(a[i + 2] + 20, 120); } }
+    x.putImageData(d, 0, 0); const u = cropInk(c); if (u) { setSig(u); $("#sigSetup").open = false; } else msg($("#signMsg"), "No signature found in that image. Use dark ink on white paper.", "err");
+    URL.revokeObjectURL(img.src);
+  };
+  img.src = URL.createObjectURL(f);
+});
+
+/* ---------- decision ---------- */
+const dec = () => document.querySelector("input[name=dec]:checked").value;
+function syncNotes() { $("#notesLbl").textContent = dec() === "reject" ? "Reason for rejection (required, shown to the requester)" : "Conditions or comments (printed in the review record)"; updateSignState(); }
+document.querySelectorAll("input[name=dec]").forEach(r => r.addEventListener("change", syncNotes));
+$("#notes").addEventListener("input", updateSignState); $("#ack").addEventListener("change", updateSignState);
+$("#signer").addEventListener("input", () => { store.set("ptw.name", $("#signer").value); });
+function updateSignState() {
+  const d = dec(), no = S.items.filter(i => i.state === "no").length, open = S.items.filter(i => !i.state).length;
+  const needAck = S.permit && d !== "reject" && (no || open);
+  $("#ackRow").hidden = !needAck;
+  if (needAck) $("#ackTxt").textContent = `I accept ${no ? no + " item" + (no > 1 ? "s" : "") + " marked No" : ""}${no && open ? " and " : ""}${open ? open + " not yet answered" : ""}, and have covered them in the conditions.`;
+  let why = "";
+  if (!S.permit) why = "Load a permit first.";
+  else if (d !== "reject" && !S.sig) why = "Add your signature first.";
+  else if (d === "reject" && !$("#notes").value.trim()) why = "Write the reason for rejection.";
+  else if (d === "conditions" && !$("#notes").value.trim()) why = "Write the conditions.";
+  else if (needAck && !$("#ack").checked) why = "Confirm the open items.";
+  $("#signBtn").disabled = !!why; if (!S.out) msg($("#signMsg"), why, "");
+}
+
+/* ---------- PDF output ---------- */
+const clean = s => String(s ?? "").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—]/g, "-").replace(/[^\x20-\x7E\xA0-\xFF]/g, "?");
+const b64 = u => Uint8Array.from(atob(u.split(",")[1]), c => c.charCodeAt(0));
+async function makeSigned(status) {
+  const {PDFDocument, StandardFonts, rgb} = PDFLib;
+  const doc = await PDFDocument.load(S.permit.bytes.slice(0)), pages = doc.getPages(), page = pages[S.boxPage];
+  const H = page.getHeight(), b = S.box, hv = await doc.embedFont(StandardFonts.Helvetica), hb = await doc.embedFont(StandardFonts.HelveticaBold);
+  const ok = status !== "NOT APPROVED", col = ok ? rgb(.07, .42, .22) : rgb(.7, .15, .12), y0 = H - b.top - b.h, now = qatarNow(), name = clean($("#signer").value || "HSE Manager");
+  if (ok && S.sig) {
+    const img = await doc.embedPng(b64(S.sig)), iw = b.w - 4, ih = b.h - 9, k = Math.min(iw / img.width, ih / img.height), w = img.width * k, h = img.height * k;
+    page.drawImage(img, {x: b.x + (b.w - w) / 2, y: y0 + 8 + (ih - h) / 2, width: w, height: h});
+  } else if (!ok) page.drawText("NOT APPROVED", {x: b.x + 6, y: y0 + b.h / 2 - 2, size: 9, font: hb, color: col});
+  const t = `${name}  ${now}`, ts = Math.min(5.5, (b.w - 4) / hv.widthOfTextAtSize(t, 5.5) * 5.5);
+  page.drawText(t, {x: b.x + 2, y: y0 + 1.5, size: ts, font: hv, color: col});
+  page.drawRectangle({x: b.x, y: y0, width: b.w, height: b.h, borderColor: col, borderWidth: .8});
+  const note = $("#notes").value.replace(/\s+/g, " ").trim();
+  page.drawText(clean(`HSE: ${status}  ${now}` + (note ? `  -  ${note}` : "")).slice(0, 118), {x: 28, y: H - 16, size: 7.5, font: hb, color: col});
+  doc.setTitle(`${S.permit.name} - ${status}`); doc.setAuthor(name);
+  return doc;
+}
+async function makeRecord(status) {
+  const {PDFDocument, StandardFonts, rgb} = PDFLib, doc = await PDFDocument.create();
+  const f = await doc.embedFont(StandardFonts.Helvetica), fb = await doc.embedFont(StandardFonts.HelveticaBold);
+  const W = 595.28, Hh = 841.89, M = 40; let page = doc.addPage([W, Hh]), y = Hh - M;
+  const ink = rgb(.08, .13, .12), grey = rgb(.4, .45, .44);
+  const need = n => { if (y - n < M + 20) { page = doc.addPage([W, Hh]); y = Hh - M; } };
+  const wrap = (t, font, size, width) => { const out = []; let line = ""; for (const w of clean(t).split(/\s+/)) { const tt = line ? line + " " + w : w; if (font.widthOfTextAtSize(tt, size) > width && line) { out.push(line); line = w; } else line = tt; } if (line) out.push(line); return out; };
+  const text = (t, o = {}) => { const size = o.size || 9, font = o.bold ? fb : f, x = o.x ?? M, width = o.width ?? (W - M - x); for (const l of wrap(t, font, size, width)) { need(size + 4); page.drawText(l, {x, y: y - size, size, font, color: o.color || ink}); y -= size + 3.5; } };
+  text("HSE PERMIT REVIEW RECORD", {size: 15, bold: true}); y -= 2;
+  text(`Rixos Premium Qetaifan Island North - Meryal Water Park / Azure Beach Club`, {size: 8.5, color: grey}); y -= 6;
+  const pno = field(S.permit.text, "Permit Number");
+  const meta = [["Permit file", S.permit.name], ["Form", S.form ? `${S.form} ${FORMS[S.form].name}` : "unrecognised"], ["Permit number", pno || "not read"], ["Nature of work", [...S.tags].map(k => TAGS[k]).join(", ") || "-"], ["Attachments", S.docs.map(d => d.name).join("; ") || "none"], ["Reviewed", qatarNow() + " (Doha)"]];
+  for (const [k, v] of meta) { const l = wrap(v, f, 9, W - M - 140); need(13 * l.length); page.drawText(k, {x: M, y: y - 9, size: 8.5, font: fb, color: grey}); for (const ln of l) { page.drawText(ln, {x: M + 100, y: y - 9, size: 9, font: f, color: ink}); y -= 12; } }
+  y -= 6;
+  const dcol = status === "NOT APPROVED" ? rgb(.7, .15, .12) : status === "APPROVED" ? rgb(.07, .42, .22) : rgb(.6, .36, 0);
+  need(30); page.drawRectangle({x: M, y: y - 22, width: W - 2 * M, height: 22, color: rgb(.95, .96, .96), borderColor: dcol, borderWidth: 1});
+  page.drawText("DECISION: " + status, {x: M + 8, y: y - 15, size: 11, font: fb, color: dcol}); y -= 32;
+  const note = $("#notes").value.trim(); if (note) { text(status === "NOT APPROVED" ? "Reason" : "Conditions / comments", {bold: true, size: 9}); text(note, {size: 9}); y -= 4; }
+  if (S.ai) {
+    text("Claude's review (decision support)", {bold: true, size: 10}); text(S.ai.rationale || "", {size: 9});
+    for (const [t, d] of [["Method statement", S.ai.ms], ["Risk assessment", S.ai.ra]]) if (d) { text(`${t}: ${String(d.verdict || "").replace("_", " ")} - ${d.summary || ""}`, {size: 9}); (d.gaps || []).forEach(g => text("- " + g, {size: 8.5, x: M + 10})); }
+    (S.ai.permit_issues || []).forEach(g => text("Permit: " + g, {size: 8.5, x: M + 10})); y -= 4;
+  }
+  const order = ["P", "M", "R", ...Object.keys(TAGS)], label = {yes: "YES", no: "NO", na: "N/A"};
+  for (const g of order) {
+    const its = S.items.filter(i => i.group === g); if (!its.length) continue;
+    need(30); y -= 4; text(GROUPS[g] || TAGS[g], {bold: true, size: 9.5});
+    for (const i of its) {
+      const l = wrap(i.text, f, 8.5, W - 2 * M - 70), nl = i.note ? wrap(i.note, f, 7.5, W - 2 * M - 70) : []; need((l.length + nl.length) * 11 + 4);
+      const st = i.state ? label[i.state] : "OPEN", c = i.state === "yes" ? rgb(.07, .42, .22) : i.state === "no" ? rgb(.7, .15, .12) : grey;
+      page.drawText(st, {x: M, y: y - 8.5, size: 8.5, font: fb, color: c});
+      for (const ln of l) { page.drawText(ln, {x: M + 42, y: y - 8.5, size: 8.5, font: f, color: ink}); y -= 11; }
+      for (const ln of nl) { page.drawText(ln, {x: M + 42, y: y - 7.5, size: 7.5, font: f, color: grey}); y -= 9.5; }
+      y -= 2;
+    }
+  }
+  need(90); y -= 12;
+  if (S.sig && status !== "NOT APPROVED") { const img = await doc.embedPng(b64(S.sig)), k = Math.min(150 / img.width, 50 / img.height); page.drawImage(img, {x: M, y: y - img.height * k, width: img.width * k, height: img.height * k}); y -= img.height * k + 4; }
+  page.drawLine({start: {x: M, y}, end: {x: M + 180, y}, thickness: .6, color: ink}); y -= 11;
+  page.drawText(`${clean($("#signer").value || "HSE Manager")}  -  ${qatarNow()}`, {x: M, y, size: 8.5, font: f, color: ink});
+  doc.setTitle("HSE permit review record");
+  return doc;
+}
+async function makeSignedDocx(status) {
+  const zip = await JSZip.loadAsync(S.permit.buf.slice(0)), xml = await zip.file("word/document.xml").async("string");
+  const c = docxCells(xml), cell = c.below(/Approved\s*By\s*\(?\s*Safety/i);
+  if (!cell) throw new Error("The Approved By (Safety Manager) box was not found in this Word file.");
+  const ok = status !== "NOT APPROVED", now = qatarNow(), name = $("#signer").value || "HSE Manager", colour = ok ? "117A37" : "B3261E";
+  for (const pn of [...cell.childNodes].filter(n => n.localName === "p")) if (!c.txt(pn).trim() && !c.has(pn)) cell.removeChild(pn);
+  const W = c.NS, x = t => String(t).replace(/[&<>"]/g, m => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;"}[m]));
+  const run = (t, col, sz, bold) => `<w:r><w:rPr>${bold ? "<w:b/>" : ""}<w:color w:val="${col}"/><w:sz w:val="${sz}"/></w:rPr><w:t xml:space="preserve">${x(t)}</w:t></w:r>`;
+  const pp = '<w:pPr><w:spacing w:before="0" w:after="0"/><w:jc w:val="center"/></w:pPr>';
+  let paras = `<w:p>${pp}${run(status, colour, 12, true)}</w:p>`;
+  if (ok && S.sig) {
+    const u8 = b64(S.sig), dv = new DataView(u8.buffer), iw = dv.getUint32(16), ih = dv.getUint32(20), k = Math.min(100 / iw, 26 / ih), cx = Math.round(iw * k * 12700), cy = Math.round(ih * k * 12700);
+    zip.file("word/media/ptw_sig.png", u8);
+    let rels = await zip.file("word/_rels/document.xml.rels").async("string");
+    rels = rels.replace("</Relationships>", '<Relationship Id="rIdPtwSig" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/ptw_sig.png"/></Relationships>');
+    zip.file("word/_rels/document.xml.rels", rels);
+    let ct = await zip.file("[Content_Types].xml").async("string");
+    if (!/Extension="png"/i.test(ct)) { ct = ct.replace("</Types>", '<Default Extension="png" ContentType="image/png"/></Types>'); zip.file("[Content_Types].xml", ct); }
+    paras += `<w:p>${pp}<w:r><w:drawing><wp:inline distT="0" distB="0" distL="0" distR="0"><wp:extent cx="${cx}" cy="${cy}"/><wp:docPr id="9901" name="HSE signature"/><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="signature.png"/><pic:cNvPicPr/></pic:nvPicPr><pic:blipFill><a:blip r:embed="rIdPtwSig"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="${cx}" cy="${cy}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r></w:p>`;
+  }
+  paras += `<w:p>${pp}${run(name + "  " + now, colour, 10, false)}</w:p>`;
+  const wrap = `<w:root xmlns:w="${W}" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">${paras}</w:root>`;
+  const frag = new DOMParser().parseFromString(wrap, "application/xml");
+  for (const n of [...frag.documentElement.childNodes]) cell.appendChild(c.doc.importNode(n, true));
+  zip.file("word/document.xml", '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' + new XMLSerializer().serializeToString(c.doc).replace(/^<\?xml[^>]*\?>\s*/, ""));
+  return zip.generateAsync({type: "blob", mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"});
+}
+const asBlob = async d => new Blob([await d.save()], {type: "application/pdf"});
+const baseName = () => { const n = field(S.permit.text, "Permit Number").replace(/[^\w\-]/g, ""); return `${S.form || "PTW"}_${n || S.permit.name.replace(/\.pdf$/i, "").replace(/[^\w\-]/g, "_").slice(0, 40)}`; };
+$("#signBtn").onclick = async () => {
+  const d = dec(), status = d === "approve" ? "APPROVED" : d === "conditions" ? "APPROVED WITH CONDITIONS" : "NOT APPROVED";
+  $("#signBtn").disabled = true; msg($("#signMsg"), "Preparing files…");
+  try {
+    const record = await makeRecord(status);
+    if (S.permit.kind === "docx") {
+      S.out = {status, ext: "docx", signed: await makeSignedDocx(status), record: await asBlob(record), both: null, base: baseName()};
+    } else {
+      const signed = await makeSigned(status), both = await PDFLib.PDFDocument.create();
+      for (const src of [signed, record]) for (const p of await both.copyPages(src, src.getPageIndices())) both.addPage(p);
+      S.out = {status, ext: "pdf", signed: await asBlob(signed), record: await asBlob(record), both: await asBlob(both), base: baseName()};
+    }
+    $("#saveBoth").hidden = !S.out.both; $("#saveSigned").textContent = S.out.ext === "docx" ? "Save signed permit (Word)" : "Save signed permit (PDF)";
+    const hist = store.get("ptw.history", []);
+    hist.unshift({t: qatarNow(), form: S.form || "?", no: field(S.permit.text, "Permit Number") || S.permit.name, status, file: S.out.base, note: $("#notes").value.trim().slice(0, 200)});
+    store.set("ptw.history", hist.slice(0, 500)); renderHist();
+    $("#outRow").hidden = false; drawBox();
+    msg($("#signMsg"), `${status}. Files are ready: save them below.`, "ok");
+  } catch (e) { console.error(e); msg($("#signMsg"), "Could not build the PDF. Reload the permit and try again.", "err"); $("#signBtn").disabled = false; }
+};
+async function save(name, data, label) {
+  $("#linkRow").innerHTML = "";
+  const dl = await (window.claude?.use ? claude.use("downloads") : null);
+  let saved = false;
+  if (dl) {
+    try { await dl.save({filename: name, data}); saved = true; msg($("#signMsg"), label + " saved.", "ok"); }
+    catch (e) { if (e?.code === "declined") { msg($("#signMsg"), "Save was cancelled. Press the button again to save.", ""); return; } console.warn("download failed", e); }
+  }
+  if (saved) return;
+  // fallback: put the file in the page's storage and show a link that opens in a new tab
+  const as = await (window.claude?.use ? claude.use("assets") : null);
+  if (!as) { msg($("#signMsg"), "This view cannot save files. Open the page in the Claude app or in claude.ai in your browser, then try again.", "err"); return; }
+  try {
+    msg($("#signMsg"), "Preparing a link…");
+    const r = await as.upload(data instanceof Blob ? data : new Blob([data], {type: "text/csv"}));
+    $("#linkRow").innerHTML = `<a class="btn primary" style="text-decoration:none;display:inline-block" href="${esc(r.url)}" target="_blank" rel="noopener">Open ${esc(label)} in a new tab</a><span class="sub">Then use the browser's download or share button to keep it.</span>`;
+    msg($("#signMsg"), "Your browser did not offer the download. Use the link below.", "ok");
+  } catch (e) { console.error(e); msg($("#signMsg"), "Could not save or open the file. Reload the page and try again.", "err"); }
+}
+$("#saveSigned").onclick = () => save(`${S.out.base}_${S.out.status.replace(/ /g, "_")}.${S.out.ext}`, S.out.signed, "Signed permit");
+$("#saveRecord").onclick = () => save(`${S.out.base}_REVIEW_RECORD.pdf`, S.out.record, "Review record");
+$("#saveBoth").onclick = () => save(`${S.out.base}_${S.out.status.replace(/ /g, "_")}_with_record.pdf`, S.out.both, "Combined PDF");
+$("#nextBtn").onclick = () => {
+  S.permit = null; S.docs = []; S.items = []; S.ai = null; S.out = null; S.box = null; S.tags = new Set(); S.form = null;
+  $("#viewer").hidden = true; $("#docView").hidden = true; $("#docNote").hidden = true; $("#linkRow").innerHTML = ""; $("#reviewBody").style.display = "none"; $("#reviewBody").hidden = true; $("#reviewEmpty").style.display = ""; $("#outRow").hidden = true;
+  $("#findings").innerHTML = ""; $("#notes").value = ""; $("#ack").checked = false; document.querySelector("input[name=dec][value=approve]").checked = true;
+  renderDocs(); msg($("#loadMsg"), ""); msg($("#signMsg"), ""); syncNotes(); window.scrollTo({top: 0});
+};
+
+/* ---------- register ---------- */
+function renderHist() {
+  const h = store.get("ptw.history", []);
+  $("#hist").innerHTML = h.length ? h.slice(0, 30).map(r => `<div class="h"><span class="mono">${esc(r.t)}</span><span class="mono">${esc(r.form)}</span><span style="min-width:0;overflow-wrap:anywhere">${esc(r.no)}${r.note ? `<br><span class="sub">${esc(r.note)}</span>` : ""}</span><span class="pill ${r.status === "APPROVED" ? "good" : r.status === "NOT APPROVED" ? "bad" : "warn"}">${esc(r.status)}</span></div>`).join("") : '<div class="empty">No decisions yet. Each signed permit is listed here.</div>';
+}
+$("#csvBtn").onclick = () => {
+  const h = store.get("ptw.history", []), q = v => '"' + String(v ?? "").replace(/"/g, '""') + '"';
+  save(`PTW_register_${new Date().toISOString().slice(0, 10)}.csv`, ["time,form,permit,decision,file,notes", ...h.map(r => [r.t, r.form, r.no, r.status, r.file, r.note].map(q).join(","))].join("\n"), "Register");
+};
+
+/* ---------- init ---------- */
+S.sig = store.get("ptw.sig", null); $("#signer").value = store.get("ptw.name", "HSE Manager");
+renderSig(); renderHist(); syncNotes();
+</script>
